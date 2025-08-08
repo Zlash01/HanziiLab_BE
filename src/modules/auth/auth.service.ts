@@ -31,9 +31,9 @@ export class AuthService {
     if (user && (await bcrypt.compare(pass, user.passwordHash))) {
       // Create JWT payload
       const payload = {
-        sub: user.id, // 'sub' is standard for user ID
+        id: user.id, // Include user ID
         email: user.email,
-        // Add any other claims you want in the token
+        role: user.role, // Include user role for authorization
       };
 
       // Generate and return JWT token

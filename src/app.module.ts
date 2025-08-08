@@ -1,14 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './modules/users/entities/user.entity';
+import { Courses } from './modules/courses/entities/course.entities';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CoursesController } from './modules/courses/courses.controller';
-import { CoursesService } from './modules/courses/courses.service';
 import { CoursesModule } from './modules/courses/courses.module';
-import { UsersController } from './modules/users/users.controller';
-import { UsersService } from './modules/users/users.service';
 
 @Module({
   imports: [
@@ -36,7 +33,7 @@ import { UsersService } from './modules/users/users.service';
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_DATABASE'),
-          entities: [User],
+          entities: [User, Courses],
           synchronize: true,
         };
       },
@@ -45,7 +42,5 @@ import { UsersService } from './modules/users/users.service';
     UsersModule,
     CoursesModule,
   ],
-  controllers: [CoursesController, UsersController],
-  providers: [CoursesService, UsersService],
 })
 export class AppModule {}
