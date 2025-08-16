@@ -9,7 +9,7 @@ import {
   Index,
 } from 'typeorm';
 // import { UserVocabulary } from '../../vocabulary/entities/user-vocabulary.entity';
-import { Role } from 'src/modules/auth/enums/role.enum';
+import { Role } from '../../../modules/auth/enums/role.enum';
 
 @Entity('users')
 @Index(['currentHskLevel'])

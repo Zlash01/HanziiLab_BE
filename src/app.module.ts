@@ -2,10 +2,17 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './modules/users/entities/user.entity';
 import { Courses } from './modules/courses/entities/course.entities';
+import { Word } from './modules/words/entities/word.entity';
+import { WordSense } from './modules/words/entities/word-sense.entity';
+import { WordSenseTranslation } from './modules/words/entities/word-sense-translation.entity';
+import { GrammarPattern } from './modules/grammar/entities/grammar-pattern.entity';
+import { GrammarTranslation } from './modules/grammar/entities/grammar-translation.entity';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CoursesModule } from './modules/courses/courses.module';
+import { WordsModule } from './modules/words/words.module';
+import { GrammarModule } from './modules/grammar/grammar.module';
 
 @Module({
   imports: [
@@ -33,7 +40,15 @@ import { CoursesModule } from './modules/courses/courses.module';
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_DATABASE'),
-          entities: [User, Courses],
+          entities: [
+            User,
+            Courses,
+            Word,
+            WordSense,
+            WordSenseTranslation,
+            GrammarPattern,
+            GrammarTranslation,
+          ],
           synchronize: true,
         };
       },
@@ -41,6 +56,8 @@ import { CoursesModule } from './modules/courses/courses.module';
     AuthModule,
     UsersModule,
     CoursesModule,
+    WordsModule,
+    GrammarModule,
   ],
 })
 export class AppModule {}
