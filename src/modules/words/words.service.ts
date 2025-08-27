@@ -19,16 +19,6 @@ export class WordsService {
 
   // Create a new word
   async create(createWordDto: CreateWordDto): Promise<Word> {
-    // Check if word with same simplified already exists
-    const existingWord = await this.wordsRepository.findOne({
-      where: { simplified: createWordDto.simplified },
-    });
-    if (existingWord) {
-      throw new BadRequestException(
-        'Word with this simplified form already exists',
-      );
-    }
-
     const word = this.wordsRepository.create(createWordDto);
     return this.wordsRepository.save(word);
   }

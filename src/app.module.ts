@@ -7,16 +7,16 @@ import { WordSense } from './modules/words/entities/word-sense.entity';
 import { WordSenseTranslation } from './modules/words/entities/word-sense-translation.entity';
 import { GrammarPattern } from './modules/grammar/entities/grammar-pattern.entity';
 import { GrammarTranslation } from './modules/grammar/entities/grammar-translation.entity';
-import { Sentence } from './modules/sentences/entities/sentence.entity';
-import { SentenceTranslation } from './modules/sentences/entities/sentence-translation.entity';
-import { SentenceToken } from './modules/sentences/entities/sentence-token.entity';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CoursesModule } from './modules/courses/courses.module';
 import { WordsModule } from './modules/words/words.module';
 import { GrammarModule } from './modules/grammar/grammar.module';
-import { SentencesModule } from './modules/sentences/sentences.module';
+import { LessonsModule } from './modules/lessons/lessons.module';
+import { Lessons } from './modules/lessons/entities/lesson.entities';
+import { Content } from './modules/lessons/entities/content.entity';
+import { Question } from './modules/lessons/entities/question.entity';
 
 @Module({
   imports: [
@@ -52,9 +52,9 @@ import { SentencesModule } from './modules/sentences/sentences.module';
             WordSenseTranslation,
             GrammarPattern,
             GrammarTranslation,
-            Sentence,
-            SentenceTranslation,
-            SentenceToken,
+            Lessons,
+            Content,
+            Question,
           ],
           synchronize: true,
         };
@@ -65,7 +65,7 @@ import { SentencesModule } from './modules/sentences/sentences.module';
     CoursesModule,
     WordsModule,
     GrammarModule,
-    SentencesModule,
+    LessonsModule,
   ],
 })
 export class AppModule {}

@@ -6,8 +6,10 @@ import {
   Index,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { HskLevel } from '../enums/hsk-level.enum';
+import { Lessons } from 'src/modules/lessons/entities/lesson.entities';
 
 @Entity('courses')
 @Index(['hskLevel'])
@@ -31,9 +33,6 @@ export class Courses {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ name: 'total_lessons', type: 'int', default: 0 })
-  totalLessons: number;
-
   @Column({
     name: 'prerequisite_course_id',
     type: 'int',
@@ -55,4 +54,7 @@ export class Courses {
   @ManyToOne(() => Courses, { nullable: true })
   @JoinColumn({ name: 'prerequisite_course_id' })
   prerequisiteCourse: Courses;
+
+  @OneToMany(() => Lessons, (lesson) => lesson.course, { onDelete: 'CASCADE' })
+  lessons: Lessons[];
 }

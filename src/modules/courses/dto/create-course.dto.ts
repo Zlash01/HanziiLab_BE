@@ -24,11 +24,6 @@ export class CreateCourseDto {
 
   @IsOptional()
   @IsInt()
-  @Min(0)
-  totalLessons?: number = 0;
-
-  @IsOptional()
-  @IsInt()
   @Min(1)
   prerequisiteCourseId?: number;
 
