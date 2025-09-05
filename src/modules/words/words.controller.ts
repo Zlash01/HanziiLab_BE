@@ -22,13 +22,20 @@ import { JWTGuard } from '../auth/guard/jwt.guard';
 import { RolesGuard } from '../auth/guard/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/role.enum';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
 
+@ApiTags('words')
+@ApiBearerAuth()
 @Controller('words')
 @UseGuards(JWTGuard, RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 export class WordsController {
   constructor(private readonly wordsService: WordsService) {}
 
+  @ApiOperation({ summary: 'Create a new word (Admin only)' })
+  @ApiResponse({ status: 201, description: 'Word created successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiBody({ type: CreateWordDto })
   // POST /words - Create a new word (Admin only)
   @Post()
   @Roles(Role.Admin)
@@ -36,6 +43,9 @@ export class WordsController {
     return this.wordsService.create(createWordDto);
   }
 
+  @ApiOperation({ summary: 'Get word statistics (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Word statistics retrieved successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
   // GET /words/stats - Get word statistics (Admin only)
   @Get('stats')
   @Roles(Role.Admin)
@@ -50,6 +60,9 @@ export class WordsController {
     return this.wordsService.findBySimplified(simplified);
   }
 
+  @ApiOperation({ summary: 'Get all words with filtering and pagination' })
+  @ApiResponse({ status: 200, description: 'Words retrieved successfully' })
+  @ApiQuery({ type: GetWordsQueryDto })
   // GET /words - Get all words with filtering and pagination (Both user and admin)
   @Get()
   @Roles(Role.User, Role.Admin)

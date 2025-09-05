@@ -15,6 +15,8 @@ import { WordsModule } from './modules/words/words.module';
 import { GrammarModule } from './modules/grammar/grammar.module';
 import { LessonsModule } from './modules/lessons/lessons.module';
 import { Lessons } from './modules/lessons/entities/lesson.entities';
+import { LessonWord } from './modules/lessons/entities/lesson-word.entity';
+import { LessonGrammarPattern } from './modules/lessons/entities/lesson-grammar-pattern.entity';
 import { Content } from './modules/lessons/entities/content.entity';
 import { Question } from './modules/lessons/entities/question.entity';
 
@@ -53,6 +55,8 @@ import { Question } from './modules/lessons/entities/question.entity';
             GrammarPattern,
             GrammarTranslation,
             Lessons,
+            LessonWord,
+            LessonGrammarPattern,
             Content,
             Question,
           ],

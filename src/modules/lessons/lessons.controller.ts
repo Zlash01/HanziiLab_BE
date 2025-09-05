@@ -23,13 +23,20 @@ import { CreateLessonWordDto } from './dto/lesson-word.dto';
 import { CreateLessonGrammarPatternDto } from './dto/lesson-grammar-pattern.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/role.enum';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
 
+@ApiTags('lessons')
+@ApiBearerAuth()
 @Controller('lessons')
 @UseGuards(JWTGuard, RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 export class LessonsController {
   constructor(private readonly lessonsService: LessonsService) {}
 
+  @ApiOperation({ summary: 'Create a new lesson (Admin only)' })
+  @ApiResponse({ status: 201, description: 'Lesson created successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiBody({ type: CreateLessonDto })
   //POST /lessons - Create a new lesson (Admin only)
   @Post()
   @Roles(Role.Admin)
@@ -37,6 +44,9 @@ export class LessonsController {
     return this.lessonsService.createLesson(createLessonDto);
   }
 
+  @ApiOperation({ summary: 'Get all lessons with pagination and filters' })
+  @ApiResponse({ status: 200, description: 'Lessons retrieved successfully' })
+  @ApiQuery({ type: GetLessonsQueryDto })
   //GET /lessons - Get all lessons with pagination and filters
   @Get()
   @Roles(Role.Admin, Role.User)
@@ -44,6 +54,10 @@ export class LessonsController {
     return this.lessonsService.findAll(query);
   }
 
+  @ApiOperation({ summary: 'Get complete lesson with content and questions' })
+  @ApiResponse({ status: 200, description: 'Complete lesson retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Lesson ID' })
   //GET /lessons/content/:id - Get complete lesson with content and questions
   @Get('content/:id')
   @Roles(Role.Admin, Role.User)

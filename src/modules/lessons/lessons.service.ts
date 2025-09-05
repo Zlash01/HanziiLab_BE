@@ -251,8 +251,8 @@ export class LessonsService {
         ...word,
         lessonId,
       })
-    );
-    return this.lessonWordRepository.save(lessonWords);
+    ).flat();
+    return this.lessonWordRepository.save(lessonWords) as Promise<LessonWord[]>;
   }
 
   async removeWordsFromLesson(lessonId: number, wordSenseIds: number[]): Promise<void> {
@@ -277,8 +277,8 @@ export class LessonsService {
         ...pattern,
         lessonId,
       })
-    );
-    return this.lessonGrammarPatternRepository.save(lessonGrammarPatterns);
+    ).flat();
+    return this.lessonGrammarPatternRepository.save(lessonGrammarPatterns) as Promise<LessonGrammarPattern[]>;
   }
 
   async removeGrammarPatternsFromLesson(lessonId: number, grammarPatternIds: number[]): Promise<void> {
