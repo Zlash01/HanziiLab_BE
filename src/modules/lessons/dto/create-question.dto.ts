@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsObject } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional } from 'class-validator';
 import { QuestionType } from '../enums/question-type.enum';
 
 export class CreateQuestionDto {
@@ -7,8 +7,8 @@ export class CreateQuestionDto {
   lessonId: number;
 
   @IsNumber()
-  @IsNotEmpty()
-  orderIndex: number;
+  @IsOptional()
+  orderIndex?: number;
 
   @IsEnum(QuestionType)
   @IsNotEmpty()

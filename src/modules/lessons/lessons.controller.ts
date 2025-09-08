@@ -21,6 +21,7 @@ import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { GetLessonsQueryDto } from './dto/get-lessons-query.dto';
 import { CreateLessonWordDto } from './dto/lesson-word.dto';
 import { CreateLessonGrammarPatternDto } from './dto/lesson-grammar-pattern.dto';
+import { CreateLessonItemDto } from './dto/create-lesson-item.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/role.enum';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
@@ -287,5 +288,17 @@ export class LessonsController {
     return {
       message: 'Grammar patterns removed from lesson successfully',
     };
+  }
+
+  @ApiOperation({ summary: 'Create lesson content or question (unified endpoint) (Admin only)' })
+  @ApiResponse({ status: 201, description: 'Lesson item created successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid item type or missing required fields' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiBody({ type: CreateLessonItemDto })
+  @Post('items')
+  @Roles(Role.Admin)
+  async createLessonItem(@Body() createLessonItemDto: CreateLessonItemDto): Promise<any> {
+    return this.lessonsService.createLessonItem(createLessonItemDto);
   }
 }

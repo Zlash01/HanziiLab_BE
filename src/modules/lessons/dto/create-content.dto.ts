@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsObject } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional } from 'class-validator';
 import { ContentType } from '../enums/content-type.enum';
 
 export class CreateContentDto {
@@ -7,8 +7,8 @@ export class CreateContentDto {
   lessonId: number;
 
   @IsNumber()
-  @IsNotEmpty()
-  orderIndex: number;
+  @IsOptional()
+  orderIndex?: number;
 
   @IsEnum(ContentType)
   @IsNotEmpty()

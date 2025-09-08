@@ -4,15 +4,21 @@ import { Repository } from 'typeorm';
 import { Question } from './entities/question.entity';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
+import { OrderIndexService } from './order-index.service';
 
 @Injectable()
 export class QuestionsService {
   constructor(
     @InjectRepository(Question)
     private questionRepository: Repository<Question>,
+    private orderIndexService: OrderIndexService,
   ) {}
 
   async create(createQuestionDto: CreateQuestionDto): Promise<Question> {
+    if (createQuestionDto.orderIndex === undefined) {
+      createQuestionDto.orderIndex = await this.orderIndexService.getNextOrderIndex(createQuestionDto.lessonId);
+    }
+    
     const question = this.questionRepository.create(createQuestionDto);
     return await this.questionRepository.save(question);
   }

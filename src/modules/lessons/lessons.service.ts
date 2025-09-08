@@ -16,6 +16,7 @@ import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { GetLessonsQueryDto } from './dto/get-lessons-query.dto';
 import { CreateLessonWordDto } from './dto/lesson-word.dto';
 import { CreateLessonGrammarPatternDto } from './dto/lesson-grammar-pattern.dto';
+import { CreateLessonItemDto, LessonItemType } from './dto/create-lesson-item.dto';
 import { ContentService } from './content.service';
 import { QuestionsService } from './questions.service';
 
@@ -340,12 +341,12 @@ export class LessonsService {
     const combinedContent = [
       ...content.map((c) => ({
         order_index: c.orderIndex,
-        question_type: c.type,
+        type: c.type,
         ...c.data,
       })),
       ...questions.map((q) => ({
         order_index: q.orderIndex,
-        question_type: q.questionType,
+        type: q.questionType,
         ...q.data,
       })),
     ].sort((a, b) => a.order_index - b.order_index);
@@ -559,5 +560,31 @@ export class LessonsService {
       relations: ['grammarPattern'],
       order: { orderIndex: 'ASC' },
     });
+  }
+
+  async createLessonItem(createLessonItemDto: CreateLessonItemDto): Promise<any> {
+    const { itemType, contentType, questionType, ...commonData } = createLessonItemDto;
+
+    if (itemType === LessonItemType.CONTENT) {
+      if (!contentType) {
+        throw new BadRequestException('contentType is required when itemType is "content"');
+      }
+      
+      return this.contentService.create({
+        ...commonData,
+        type: contentType,
+      });
+    } else if (itemType === LessonItemType.QUESTION) {
+      if (!questionType) {
+        throw new BadRequestException('questionType is required when itemType is "question"');
+      }
+      
+      return this.questionsService.create({
+        ...commonData,
+        questionType: questionType,
+      });
+    } else {
+      throw new BadRequestException('Invalid itemType. Must be "content" or "question"');
+    }
   }
 }

@@ -11,6 +11,7 @@ import { Courses } from '../courses/entities/course.entities';
 import { LessonsService } from './lessons.service';
 import { ContentService } from './content.service';
 import { QuestionsService } from './questions.service';
+import { OrderIndexService } from './order-index.service';
 import { LessonsController } from './lessons.controller';
 import { ContentController } from './content.controller';
 import { QuestionsController } from './questions.controller';
@@ -18,7 +19,7 @@ import { QuestionsController } from './questions.controller';
 @Module({
   imports: [TypeOrmModule.forFeature([Lessons, LessonWord, LessonGrammarPattern, Content, Question, WordSense, GrammarPattern, Courses])],
   controllers: [LessonsController, ContentController, QuestionsController],
-  providers: [LessonsService, ContentService, QuestionsService],
-  exports: [LessonsService, ContentService, QuestionsService],
+  providers: [LessonsService, ContentService, QuestionsService, OrderIndexService],
+  exports: [LessonsService, ContentService, QuestionsService, OrderIndexService],
 })
 export class LessonsModule {}
