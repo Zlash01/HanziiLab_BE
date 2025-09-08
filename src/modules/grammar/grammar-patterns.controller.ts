@@ -18,7 +18,10 @@ import { JWTGuard } from '../auth/guard/jwt.guard';
 import { RolesGuard } from '../auth/guard/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/role.enum';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
 
+@ApiTags('grammar-patterns')
+@ApiBearerAuth('JWT-auth')
 @Controller('grammar-patterns')
 @UseGuards(JWTGuard, RolesGuard)
 export class GrammarPatternsController {
@@ -26,18 +29,28 @@ export class GrammarPatternsController {
     private readonly grammarPatternsService: GrammarPatternsService,
   ) {}
 
+  @ApiOperation({ summary: 'Create a new grammar pattern (Admin only)' })
+  @ApiResponse({ status: 201, description: 'Grammar pattern created successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiBody({ type: CreateGrammarPatternDto })
   @Post()
   @Roles(Role.Admin)
   create(@Body() createGrammarPatternDto: CreateGrammarPatternDto) {
     return this.grammarPatternsService.create(createGrammarPatternDto);
   }
 
+  @ApiOperation({ summary: 'Get all grammar patterns with pagination and filters' })
+  @ApiResponse({ status: 200, description: 'Grammar patterns retrieved successfully' })
+  @ApiQuery({ type: GetGrammarPatternsQueryDto })
   @Get()
   @Roles(Role.Admin, Role.User)
   findAll(@Query() query: GetGrammarPatternsQueryDto) {
     return this.grammarPatternsService.findAll(query);
   }
 
+  @ApiOperation({ summary: 'Get grammar pattern statistics (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Statistics retrieved successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
   @Get('stats')
   @Roles(Role.Admin)
   getStatistics() {

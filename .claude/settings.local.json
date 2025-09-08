@@ -5,7 +5,8 @@
       "Read(/C:\\Users\\Zlash01\\Desktop\\FinalThesis\\chinese_backend\\chinese-backend-mysql\\src\\modules\\lessons/**)",
       "Read(/C:\\Users\\Zlash01\\Desktop\\FinalThesis\\chinese_backend\\chinese-backend-mysql\\src\\modules\\lessons\\entities/**)",
       "Read(/C:\\Users\\Zlash01\\Desktop\\FinalThesis\\chinese_backend\\chinese-backend-mysql\\src\\modules\\lessons\\entities/**)",
-      "Read(/C:\\Users\\Zlash01\\Desktop\\FinalThesis\\chinese_backend\\chinese-backend-mysql\\src/**)"
+      "Read(/C:\\Users\\Zlash01\\Desktop\\FinalThesis\\chinese_backend\\chinese-backend-mysql\\src/**)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []

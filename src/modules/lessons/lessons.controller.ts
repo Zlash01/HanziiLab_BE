@@ -61,10 +61,14 @@ export class LessonsController {
   //GET /lessons/content/:id - Get complete lesson with content and questions
   @Get('content/:id')
   @Roles(Role.Admin, Role.User)
-  async findCompleteLesson(@Param('id', ParseIntPipe) id: number) {
+  async findCompleteLesson(@Param('id', ParseIntPipe) id: number): Promise<any> {
     return this.lessonsService.findCompleteLesson(id);
   }
 
+  @ApiOperation({ summary: 'Get lesson by ID' })
+  @ApiResponse({ status: 200, description: 'Lesson retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Lesson ID' })
   //GET /lessons/:id - Get lesson by ID (Both user and admin)
   @Get(':id')
   @Roles(Role.Admin, Role.User)
@@ -72,6 +76,9 @@ export class LessonsController {
     return this.lessonsService.findOne(id);
   }
 
+  @ApiOperation({ summary: 'Get active lessons by course ID' })
+  @ApiResponse({ status: 200, description: 'Active lessons retrieved successfully' })
+  @ApiParam({ name: 'courseId', type: 'number', description: 'Course ID' })
   //GET /lessons/course/:courseId - Get lessons by course ID
   @Get('course/:courseId')
   @Roles(Role.Admin, Role.User)
@@ -79,6 +86,10 @@ export class LessonsController {
     return this.lessonsService.findByCourseId(courseId);
   }
 
+  @ApiOperation({ summary: 'Get all lessons by course ID including inactive (Admin only)' })
+  @ApiResponse({ status: 200, description: 'All lessons (including inactive) retrieved successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiParam({ name: 'courseId', type: 'number', description: 'Course ID' })
   //GET /lessons/course/:courseId/all - Get all lessons by course ID including inactive (Admin only)
   @Get('course/:courseId/all')
   @Roles(Role.Admin)
@@ -88,6 +99,13 @@ export class LessonsController {
     return this.lessonsService.findByCourseIdIncludeInactive(courseId);
   }
 
+  @ApiOperation({ summary: 'Update lesson by ID (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Lesson updated successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid data or validation errors' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Lesson ID' })
+  @ApiBody({ type: UpdateLessonDto })
   //PUT /lessons/:id - Update lesson by ID (Admin only)
   @Put(':id')
   @Roles(Role.Admin)
@@ -98,6 +116,11 @@ export class LessonsController {
     return this.lessonsService.update(id, updateLessonDto);
   }
 
+  @ApiOperation({ summary: 'Soft delete lesson (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Lesson soft deleted successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Lesson ID' })
   //DELETE /lessons/:id/soft - Soft delete lesson by ID (Admin only)
   @Delete(':id/soft')
   @Roles(Role.Admin)
@@ -109,6 +132,11 @@ export class LessonsController {
     };
   }
 
+  @ApiOperation({ summary: 'Hard delete lesson permanently (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Lesson permanently deleted successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Lesson ID' })
   //DELETE /lessons/:id/hard - Hard delete lesson by ID (Admin only)
   @Delete(':id/hard')
   @Roles(Role.Admin)
@@ -117,6 +145,11 @@ export class LessonsController {
     return { message: 'Lesson permanently deleted successfully' };
   }
 
+  @ApiOperation({ summary: 'Restore soft deleted lesson (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Lesson restored successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Lesson ID' })
   //PATCH /lessons/:id/restore - Restore soft deleted lesson (Admin only)
   @Patch(':id/restore')
   @Roles(Role.Admin)
@@ -129,6 +162,10 @@ export class LessonsController {
   }
 
   // Word Management Endpoints
+  @ApiOperation({ summary: 'Get all words for a lesson' })
+  @ApiResponse({ status: 200, description: 'Lesson words retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Lesson ID' })
   //GET /lessons/:id/words - Get all words for a lesson
   @Get(':id/words')
   @Roles(Role.Admin, Role.User)
@@ -136,6 +173,13 @@ export class LessonsController {
     return this.lessonsService.getLessonWords(id);
   }
 
+  @ApiOperation({ summary: 'Add words to a lesson (Admin only)' })
+  @ApiResponse({ status: 201, description: 'Words added to lesson successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid word sense IDs or duplicates' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Lesson ID' })
+  @ApiBody({ type: [CreateLessonWordDto] })
   //POST /lessons/:id/words - Add words to a lesson (Admin only)
   @Post(':id/words')
   @Roles(Role.Admin)
@@ -150,6 +194,24 @@ export class LessonsController {
     };
   }
 
+  @ApiOperation({ summary: 'Remove words from a lesson (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Words removed from lesson successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid word sense IDs or not assigned to lesson' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Lesson ID' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        wordSenseIds: {
+          type: 'array',
+          items: { type: 'number' },
+          description: 'Array of word sense IDs to remove'
+        }
+      }
+    }
+  })
   //DELETE /lessons/:id/words - Remove words from a lesson (Admin only)
   @Delete(':id/words')
   @Roles(Role.Admin)
@@ -164,6 +226,10 @@ export class LessonsController {
   }
 
   // Grammar Pattern Management Endpoints
+  @ApiOperation({ summary: 'Get all grammar patterns for a lesson' })
+  @ApiResponse({ status: 200, description: 'Lesson grammar patterns retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Lesson ID' })
   //GET /lessons/:id/grammar-patterns - Get all grammar patterns for a lesson
   @Get(':id/grammar-patterns')
   @Roles(Role.Admin, Role.User)
@@ -171,6 +237,13 @@ export class LessonsController {
     return this.lessonsService.getLessonGrammarPatterns(id);
   }
 
+  @ApiOperation({ summary: 'Add grammar patterns to a lesson (Admin only)' })
+  @ApiResponse({ status: 201, description: 'Grammar patterns added to lesson successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid grammar pattern IDs or duplicates' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Lesson ID' })
+  @ApiBody({ type: [CreateLessonGrammarPatternDto] })
   //POST /lessons/:id/grammar-patterns - Add grammar patterns to a lesson (Admin only)
   @Post(':id/grammar-patterns')
   @Roles(Role.Admin)
@@ -185,6 +258,24 @@ export class LessonsController {
     };
   }
 
+  @ApiOperation({ summary: 'Remove grammar patterns from a lesson (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Grammar patterns removed from lesson successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid grammar pattern IDs or not assigned to lesson' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Lesson ID' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        grammarPatternIds: {
+          type: 'array',
+          items: { type: 'number' },
+          description: 'Array of grammar pattern IDs to remove'
+        }
+      }
+    }
+  })
   //DELETE /lessons/:id/grammar-patterns - Remove grammar patterns from a lesson (Admin only)
   @Delete(':id/grammar-patterns')
   @Roles(Role.Admin)
