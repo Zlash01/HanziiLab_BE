@@ -43,6 +43,17 @@ export class LessonsService {
   async createLesson(createLessonDto: CreateLessonDto): Promise<Lessons> {
     const { words, grammarPatterns, ...lessonData } = createLessonDto;
 
+    // Auto-increment orderIndex within course if not provided
+    if (!lessonData.orderIndex) {
+      const maxOrderIndex = await this.lessonsRepository
+        .createQueryBuilder('lesson')
+        .select('MAX(lesson.orderIndex)', 'maxOrder')
+        .where('lesson.courseId = :courseId', { courseId: lessonData.courseId })
+        .getRawOne();
+      
+      lessonData.orderIndex = (maxOrderIndex?.maxOrder || 0) + 1;
+    }
+
     const lesson = this.lessonsRepository.create(lessonData);
     const savedLesson = await this.lessonsRepository.save(lesson);
 

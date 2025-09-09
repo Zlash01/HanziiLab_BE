@@ -60,14 +60,14 @@ export class CreateCourseDto {
   @IsBoolean()
   isActive?: boolean = true;
 
-  @ApiProperty({
-    description: 'Order index for sorting courses (must be unique)',
+  @ApiPropertyOptional({
+    description: 'Order index for sorting courses (auto-incremented if not provided)',
     example: 1,
     minimum: 1,
     type: Number,
   })
-  @IsNotEmpty()
+  @IsOptional()
   @IsInt()
   @Min(1)
-  orderIndex: number;
+  orderIndex?: number;
 }

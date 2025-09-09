@@ -9,6 +9,7 @@ import {
 import { Courses } from 'src/modules/courses/entities/course.entities';
 import { LessonWord } from './lesson-word.entity';
 import { LessonGrammarPattern } from './lesson-grammar-pattern.entity';
+import { UserLessonProgress } from '../../users/entities/user-lesson-progress.entity';
 
 @Entity('lessons')
 export class Lessons {
@@ -49,4 +50,8 @@ export class Lessons {
     cascade: true,
   })
   lessonGrammarPatterns: LessonGrammarPattern[];
+
+  // Relations to user progress
+  @OneToMany(() => UserLessonProgress, (progress) => progress.lesson)
+  userProgress: UserLessonProgress[];
 }

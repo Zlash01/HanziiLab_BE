@@ -19,6 +19,7 @@ import { LessonWord } from './modules/lessons/entities/lesson-word.entity';
 import { LessonGrammarPattern } from './modules/lessons/entities/lesson-grammar-pattern.entity';
 import { Content } from './modules/lessons/entities/content.entity';
 import { Question } from './modules/lessons/entities/question.entity';
+import { UserLessonProgress } from './modules/users/entities/user-lesson-progress.entity';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { Question } from './modules/lessons/entities/question.entity';
             LessonGrammarPattern,
             Content,
             Question,
+            UserLessonProgress,
           ],
           synchronize: true,
         };

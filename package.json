@@ -19,7 +19,10 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed:words": "ts-node -r tsconfig-paths/register src/seeds/words.seed.ts",
-    "seed:grammar": "ts-node -r tsconfig-paths/register src/seeds/grammar.seed.ts"
+    "seed:grammar": "ts-node -r tsconfig-paths/register src/seeds/grammar.seed.ts",
+    "seed:lessons": "ts-node -r tsconfig-paths/register src/seeds/lessons.seed.ts",
+    "seed:lessons:comprehensive": "ts-node -r tsconfig-paths/register src/seeds/lessons.seed.ts comprehensive",
+    "verify:lessons": "ts-node -r tsconfig-paths/register src/seeds/verify-lesson.seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

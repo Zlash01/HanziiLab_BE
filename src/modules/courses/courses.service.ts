@@ -30,12 +30,22 @@ export class CoursesService {
       }
     }
 
-    // Check if order index is already taken
-    const existingCourse = await this.coursesRepository.findOne({
-      where: { orderIndex: createCourseDto.orderIndex },
-    });
-    if (existingCourse) {
-      throw new BadRequestException('Order index already exists');
+    // Auto-increment orderIndex if not provided
+    if (!createCourseDto.orderIndex) {
+      const maxOrderIndex = await this.coursesRepository
+        .createQueryBuilder('course')
+        .select('MAX(course.orderIndex)', 'maxOrder')
+        .getRawOne();
+      
+      createCourseDto.orderIndex = (maxOrderIndex?.maxOrder || 0) + 1;
+    } else {
+      // Check if order index is already taken
+      const existingCourse = await this.coursesRepository.findOne({
+        where: { orderIndex: createCourseDto.orderIndex },
+      });
+      if (existingCourse) {
+        throw new BadRequestException('Order index already exists');
+      }
     }
 
     const course = this.coursesRepository.create(createCourseDto);

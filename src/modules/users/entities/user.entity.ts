@@ -5,11 +5,12 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  //   OneToMany,
+  OneToMany,
   Index,
 } from 'typeorm';
 // import { UserVocabulary } from '../../vocabulary/entities/user-vocabulary.entity';
 import { Role } from '../../../modules/auth/enums/role.enum';
+import { UserLessonProgress } from './user-lesson-progress.entity';
 
 @Entity('users')
 @Index(['currentHskLevel'])
@@ -71,7 +72,7 @@ export class User {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 
-  //   // Relations
-  //   @OneToMany(() => UserVocabulary, userVocab => userVocab.user)
-  //   vocabularyProgress: UserVocabulary[];
+  // Relations
+  @OneToMany(() => UserLessonProgress, (progress) => progress.user)
+  lessonProgress: UserLessonProgress[];
 }

@@ -25,10 +25,10 @@ export class CreateLessonDto {
   @IsBoolean()
   isActive?: boolean = true;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsInt()
   @Min(1)
-  orderIndex: number;
+  orderIndex?: number;
 
   @IsNotEmpty()
   @IsInt()
