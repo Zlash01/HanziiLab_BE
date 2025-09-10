@@ -44,7 +44,9 @@ async function verifyLessonData() {
 
     console.log(`\nFound ${contentItems.length} content items:`);
     contentItems.forEach((content, index) => {
-      console.log(`${index + 1}. Type: ${content.type}, Order: ${content.orderIndex}`);
+      console.log(
+        `${index + 1}. Type: ${content.type}, Order: ${content.orderIndex}`,
+      );
       console.log(`   Data: ${JSON.stringify(content.data, null, 2)}`);
     });
 
@@ -56,12 +58,13 @@ async function verifyLessonData() {
 
     console.log(`\nFound ${questionItems.length} question items:`);
     questionItems.forEach((question, index) => {
-      console.log(`${index + 1}. Type: ${question.questionType}, Order: ${question.orderIndex}`);
+      console.log(
+        `${index + 1}. Type: ${question.questionType}, Order: ${question.orderIndex}`,
+      );
       console.log(`   Data: ${JSON.stringify(question.data, null, 2)}`);
     });
 
     console.log('\nVerification completed successfully!');
-
   } catch (error) {
     console.error('Error during verification:', error);
   } finally {

@@ -32,7 +32,7 @@ async function seed() {
 
     // Create content items for the lesson
     const contentRepository = dataSource.getRepository(Content);
-    
+
     // Content 1: Word Definition
     const wordDefinitionContent = contentRepository.create({
       lessonId: savedLesson.id,
@@ -42,14 +42,15 @@ async function seed() {
         word: '你好',
         pinyin: 'nǐ hǎo',
         english: 'hello',
-        definition: 'A common greeting used in Chinese, literally meaning "you good"',
+        definition:
+          'A common greeting used in Chinese, literally meaning "you good"',
         examples: [
           {
             chinese: '你好，我是王明。',
             pinyin: 'nǐ hǎo, wǒ shì wáng míng.',
-            english: 'Hello, I am Wang Ming.'
-          }
-        ]
+            english: 'Hello, I am Wang Ming.',
+          },
+        ],
       },
       isActive: true,
     });
@@ -68,21 +69,21 @@ async function seed() {
             chinese: '你好吗？',
             pinyin: 'nǐ hǎo ma?',
             english: 'How are you?',
-            audio: '/audio/nihao-ma.mp3'
+            audio: '/audio/nihao-ma.mp3',
           },
           {
             chinese: '我很好，谢谢。',
             pinyin: 'wǒ hěn hǎo, xiè xie.',
             english: 'I am fine, thank you.',
-            audio: '/audio/wo-hen-hao.mp3'
+            audio: '/audio/wo-hen-hao.mp3',
           },
           {
             chinese: '再见！',
             pinyin: 'zài jiàn!',
             english: 'Goodbye!',
-            audio: '/audio/zaijian.mp3'
-          }
-        ]
+            audio: '/audio/zaijian.mp3',
+          },
+        ],
       },
       isActive: true,
     });
@@ -104,21 +105,22 @@ async function seed() {
           {
             id: 'A',
             image: '/images/greeting1.jpg',
-            alt: 'Two people shaking hands'
+            alt: 'Two people shaking hands',
           },
           {
             id: 'B',
             image: '/images/greeting2.jpg',
-            alt: 'Person waving goodbye'
+            alt: 'Person waving goodbye',
           },
           {
             id: 'C',
             image: '/images/greeting3.jpg',
-            alt: 'People bowing to each other'
-          }
+            alt: 'People bowing to each other',
+          },
         ],
         correctAnswer: 'A',
-        explanation: '你好 (nǐ hǎo) means hello, which is typically accompanied by a handshake or greeting gesture.'
+        explanation:
+          '你好 (nǐ hǎo) means hello, which is typically accompanied by a handshake or greeting gesture.',
       },
       isActive: true,
     });
@@ -137,10 +139,11 @@ async function seed() {
           { id: 'A', text: 'nǐ hǎo' },
           { id: 'B', text: 'nǐ háo' },
           { id: 'C', text: 'ní hǎo' },
-          { id: 'D', text: 'nì hào' }
+          { id: 'D', text: 'nì hào' },
         ],
         correctAnswer: 'A',
-        explanation: 'The correct pinyin for 你好 is "nǐ hǎo" with third tone on 你 (nǐ) and third tone on 好 (hǎo).'
+        explanation:
+          'The correct pinyin for 你好 is "nǐ hǎo" with third tone on 你 (nǐ) and third tone on 好 (hǎo).',
       },
       isActive: true,
     });
@@ -153,25 +156,26 @@ async function seed() {
       orderIndex: 5,
       questionType: QuestionType.MATCHING_TEXT,
       data: {
-        instruction: 'Match the Chinese phrases with their English translations',
+        instruction:
+          'Match the Chinese phrases with their English translations',
         leftColumn: [
           { id: '1', text: '你好' },
           { id: '2', text: '再见' },
           { id: '3', text: '谢谢' },
-          { id: '4', text: '对不起' }
+          { id: '4', text: '对不起' },
         ],
         rightColumn: [
           { id: 'A', text: 'Thank you' },
           { id: 'B', text: 'Hello' },
           { id: 'C', text: 'Goodbye' },
-          { id: 'D', text: 'Sorry' }
+          { id: 'D', text: 'Sorry' },
         ],
         correctMatches: [
           { left: '1', right: 'B' },
           { left: '2', right: 'C' },
           { left: '3', right: 'A' },
-          { left: '4', right: 'D' }
-        ]
+          { left: '4', right: 'D' },
+        ],
       },
       isActive: true,
     });
@@ -190,7 +194,7 @@ async function seed() {
         english: '___hello, I am Li Ming.',
         options: ['你', '我', '他', '她'],
         correctAnswer: '你',
-        explanation: '你好 means "hello" - 你 (you) + 好 (good/well).'
+        explanation: '你好 means "hello" - 你 (you) + 好 (good/well).',
       },
       isActive: true,
     });
@@ -209,7 +213,8 @@ async function seed() {
         pinyin: 'nǐ hǎo ma?',
         english: 'How are you?',
         correctAnswer: true,
-        explanation: '你好吗 (nǐ hǎo ma) is indeed a greeting that means "How are you?" or "Are you well?"'
+        explanation:
+          '你好吗 (nǐ hǎo ma) is indeed a greeting that means "How are you?" or "Are you well?"',
       },
       isActive: true,
     });
@@ -245,7 +250,6 @@ async function seed() {
     console.log(`Lesson ID: ${savedLesson.id}`);
     console.log('Created content items: 2');
     console.log('Created question items: 5');
-
   } catch (error) {
     console.error('Error during seeding:', error);
   } finally {
@@ -273,7 +277,8 @@ async function seedComprehensiveLesson() {
     // Create a new lesson for course ID 1 - Chinese Classifier Words
     const lessonData: Partial<Lessons> = {
       name: 'Chinese Classifier Words - 家 (jiā)',
-      description: 'Learn about the Chinese classifier word 家 (jiā) and its usage with nouns like family, shops, and factories',
+      description:
+        'Learn about the Chinese classifier word 家 (jiā) and its usage with nouns like family, shops, and factories',
       courseId: 1,
       orderIndex: 2,
       isActive: true,
@@ -286,20 +291,22 @@ async function seedComprehensiveLesson() {
 
     // Create content items for the lesson
     const contentRepository = dataSource.getRepository(Content);
-    
+
     // Content 1: Word Definition
     const wordDefinitionContent = contentRepository.create({
       lessonId: savedLesson.id,
       orderIndex: 1,
       type: ContentType.WORD_DEFINITION,
       data: {
-        picture_url: "example.url",
-        audio_url: "audio.example",
-        chinese_text: "家",
-        pinyin: "jiā",
-        part_of_speech: "số lượng từ",
-        explaination: "đây là lượng từ, dùng với các danh từ như gia đình, cửa hàng",
-        additional_info: "'家' trong Trường hợp này là lượng từ, dùng với các danh từ như gia đình, cửa hàng, công xưởng…\\ Ví dụ '一家上店' (Yījiā shàng diàn) (Một cửa hàng), '三家工厂' (Sānjiā gōngchǎng) (Ba công xưởng)"
+        picture_url: 'example.url',
+        audio_url: 'audio.example',
+        chinese_text: '家',
+        pinyin: 'jiā',
+        part_of_speech: 'số lượng từ',
+        explaination:
+          'đây là lượng từ, dùng với các danh từ như gia đình, cửa hàng',
+        additional_info:
+          "'家' trong Trường hợp này là lượng từ, dùng với các danh từ như gia đình, cửa hàng, công xưởng…\\ Ví dụ '一家上店' (Yījiā shàng diàn) (Một cửa hàng), '三家工厂' (Sānjiā gōngchǎng) (Ba công xưởng)",
       },
       isActive: true,
     });
@@ -312,11 +319,12 @@ async function seedComprehensiveLesson() {
       orderIndex: 2,
       type: ContentType.SENTENCES,
       data: {
-        picture_url: "example.url",
-        audio_url: "audio.example",
-        chinese_text: "这|家|饭店|怎么样|?",
-        pinyin: "Zhè|jiā|fàndiàn|zěnmeyàng|?",
-        additional_info: "'家' trong Trường hợp này là lượng từ, dùng với các danh từ như gia đình, cửa hàng, công xưởng…\\ Ví dụ '一家上店' (Yījiā shàng diàn) (Một cửa hàng), '三家工厂' (Sānjiā gōngchǎng) (Ba công xưởng)"
+        picture_url: 'example.url',
+        audio_url: 'audio.example',
+        chinese_text: '这|家|饭店|怎么样|?',
+        pinyin: 'Zhè|jiā|fàndiàn|zěnmeyàng|?',
+        additional_info:
+          "'家' trong Trường hợp này là lượng từ, dùng với các danh từ như gia đình, cửa hàng, công xưởng…\\ Ví dụ '一家上店' (Yījiā shàng diàn) (Một cửa hàng), '三家工厂' (Sānjiā gōngchǎng) (Ba công xưởng)",
       },
       isActive: true,
     });
@@ -332,24 +340,24 @@ async function seedComprehensiveLesson() {
       orderIndex: 3,
       questionType: QuestionType.AUDIO_IMAGE,
       data: {
-        audio_url: "example.url",
-        audio_transcript_chinese: "一|家|上店",
-        audio_transcript_pinyin: "Yī|jiā|shàngdiàn",
-        audio_transcript_translation: "Một cửa hàng",
+        audio_url: 'example.url',
+        audio_transcript_chinese: '一|家|上店',
+        audio_transcript_pinyin: 'Yī|jiā|shàngdiàn',
+        audio_transcript_translation: 'Một cửa hàng',
         answers: [
           {
             id: 1,
-            image_url: "example.url",
-            label: "一|家|上店",
-            correct: true
+            image_url: 'example.url',
+            label: '一|家|上店',
+            correct: true,
           },
           {
             id: 2,
-            image_url: "wrong_example.url",
-            label: "蛋糕",
-            correct: false
-          }
-        ]
+            image_url: 'wrong_example.url',
+            label: '蛋糕',
+            correct: false,
+          },
+        ],
       },
       isActive: true,
     });
@@ -362,21 +370,22 @@ async function seedComprehensiveLesson() {
       orderIndex: 4,
       questionType: QuestionType.TEXT_SELECTION,
       data: {
-        question_text: "này là lượng từ, dùng với các danh từ như gia đình, cửa hàng",
+        question_text:
+          'này là lượng từ, dùng với các danh từ như gia đình, cửa hàng',
         answers: [
           {
             id: 1,
-            text: "家",
-            pinyin: "jiā",
-            correct: true
+            text: '家',
+            pinyin: 'jiā',
+            correct: true,
           },
           {
             id: 2,
-            text: "蛋糕",
-            pinyin: "dàngāo",
-            correct: false
-          }
-        ]
+            text: '蛋糕',
+            pinyin: 'dàngāo',
+            correct: false,
+          },
+        ],
       },
       isActive: true,
     });
@@ -389,57 +398,57 @@ async function seedComprehensiveLesson() {
       orderIndex: 5,
       questionType: QuestionType.MATCHING_TEXT,
       data: {
-        instructions: "Chọn cặp tương ứng.",
+        instructions: 'Chọn cặp tương ứng.',
         items: [
           {
             id: 1,
-            chinese: "不錯",
-            pinyin: "bù cuò",
-            audio_url: "audio/bucuo.mp3"
+            chinese: '不錯',
+            pinyin: 'bù cuò',
+            audio_url: 'audio/bucuo.mp3',
           },
           {
             id: 2,
-            chinese: "好吃",
-            pinyin: "hǎo chī",
-            audio_url: "audio/haochi.mp3"
+            chinese: '好吃',
+            pinyin: 'hǎo chī',
+            audio_url: 'audio/haochi.mp3',
           },
           {
             id: 3,
-            chinese: "贵",
-            pinyin: "guì",
-            audio_url: "audio/gui.mp3"
+            chinese: '贵',
+            pinyin: 'guì',
+            audio_url: 'audio/gui.mp3',
           },
           {
             id: 4,
-            chinese: "家",
-            pinyin: "jiā",
-            audio_url: "audio/jia.mp3"
-          }
+            chinese: '家',
+            pinyin: 'jiā',
+            audio_url: 'audio/jia.mp3',
+          },
         ],
         definitions: [
           {
             id: 1,
-            text: "tốt; khá; không tệ"
+            text: 'tốt; khá; không tệ',
           },
           {
             id: 2,
-            text: "ngon"
+            text: 'ngon',
           },
           {
             id: 3,
-            text: "đắt, mắc"
+            text: 'đắt, mắc',
           },
           {
             id: 4,
-            text: "này là lượng từ, dùng với các danh từ như gia đình, cửa hàng"
-          }
+            text: 'này là lượng từ, dùng với các danh từ như gia đình, cửa hàng',
+          },
         ],
         correct_matches: [
           { item_id: 1, definition_id: 1 },
           { item_id: 2, definition_id: 2 },
           { item_id: 3, definition_id: 3 },
-          { item_id: 4, definition_id: 4 }
-        ]
+          { item_id: 4, definition_id: 4 },
+        ],
       },
       isActive: true,
     });
@@ -452,21 +461,21 @@ async function seedComprehensiveLesson() {
       orderIndex: 6,
       questionType: QuestionType.FILL_BLANK,
       data: {
-        instructions: "Chọn từ điền vào chỗ trống.",
-        sentence: "我|家| ____ |有|一| ____ |苹果|商店。",
-        sentence_pinyin: "Wǒ|jiā| ____ |yǒu|yī| ____ |píngguǒ|shāngdiàn.",
-        translation: "Có một cửa hàng táo bên cạnh nhà tôi.",
-        image_url: "example_image.url",
+        instructions: 'Chọn từ điền vào chỗ trống.',
+        sentence: '我|家| ____ |有|一| ____ |苹果|商店。',
+        sentence_pinyin: 'Wǒ|jiā| ____ |yǒu|yī| ____ |píngguǒ|shāngdiàn.',
+        translation: 'Có một cửa hàng táo bên cạnh nhà tôi.',
+        image_url: 'example_image.url',
         options: [
-          { id: 1, text: "家", pinyin: "jiā" },
-          { id: 2, text: "旁边", pinyin: "pángbiān" },
-          { id: 3, text: "块", pinyin: "kuài" },
-          { id: 4, text: "他", pinyin: "tā" }
+          { id: 1, text: '家', pinyin: 'jiā' },
+          { id: 2, text: '旁边', pinyin: 'pángbiān' },
+          { id: 3, text: '块', pinyin: 'kuài' },
+          { id: 4, text: '他', pinyin: 'tā' },
         ],
         correct_answers: [
           { blank_index: 1, option_id: 2 },
-          { blank_index: 2, option_id: 1 }
-        ]
+          { blank_index: 2, option_id: 1 },
+        ],
       },
       isActive: true,
     });
@@ -479,14 +488,15 @@ async function seedComprehensiveLesson() {
       orderIndex: 7,
       questionType: QuestionType.AUDIO_BOOL,
       data: {
-        audio_url: "example.url",
-        audio_transcript_chinese: "这|个|菜|太|好|吃|了|,|我|都|吃|完|了",
-        audio_transcript_pinyin: "Zhè|gè|cài|tài|hǎo|chī|le|,|wǒ|dōu|chī|wán|le",
-        audio_transcript_translation: "Món này quá ngon, tôi đã ăn hết rồi",
-        question_text: "他喜欢吃这个菜",
-        question_pinyin: "Tā xǐhuān chī zhè gè cài",
-        question_translation: "Anh ấy thích ăn món ăn này",
-        correct: true
+        audio_url: 'example.url',
+        audio_transcript_chinese: '这|个|菜|太|好|吃|了|,|我|都|吃|完|了',
+        audio_transcript_pinyin:
+          'Zhè|gè|cài|tài|hǎo|chī|le|,|wǒ|dōu|chī|wán|le',
+        audio_transcript_translation: 'Món này quá ngon, tôi đã ăn hết rồi',
+        question_text: '他喜欢吃这个菜',
+        question_pinyin: 'Tā xǐhuān chī zhè gè cài',
+        question_translation: 'Anh ấy thích ăn món ăn này',
+        correct: true,
       },
       isActive: true,
     });
@@ -499,57 +509,57 @@ async function seedComprehensiveLesson() {
       orderIndex: 8,
       questionType: QuestionType.MATCHING_AUDIO,
       data: {
-        instructions: "Nghe âm thanh và chọn nghĩa tương ứng.",
+        instructions: 'Nghe âm thanh và chọn nghĩa tương ứng.',
         items: [
           {
             id: 1,
-            chinese: "不錯",
-            pinyin: "bù cuò",
-            audio_url: "audio/bucuo.mp3"
+            chinese: '不錯',
+            pinyin: 'bù cuò',
+            audio_url: 'audio/bucuo.mp3',
           },
           {
             id: 2,
-            chinese: "好吃",
-            pinyin: "hǎo chī",
-            audio_url: "audio/haochi.mp3"
+            chinese: '好吃',
+            pinyin: 'hǎo chī',
+            audio_url: 'audio/haochi.mp3',
           },
           {
             id: 3,
-            chinese: "贵",
-            pinyin: "guì",
-            audio_url: "audio/gui.mp3"
+            chinese: '贵',
+            pinyin: 'guì',
+            audio_url: 'audio/gui.mp3',
           },
           {
             id: 4,
-            chinese: "家",
-            pinyin: "jiā",
-            audio_url: "audio/jia.mp3"
-          }
+            chinese: '家',
+            pinyin: 'jiā',
+            audio_url: 'audio/jia.mp3',
+          },
         ],
         definitions: [
           {
             id: 1,
-            text: "tốt; khá; không tệ"
+            text: 'tốt; khá; không tệ',
           },
           {
             id: 2,
-            text: "ngon"
+            text: 'ngon',
           },
           {
             id: 3,
-            text: "đắt, mắc"
+            text: 'đắt, mắc',
           },
           {
             id: 4,
-            text: "này là lượng từ, dùng với các danh từ như gia đình, cửa hàng"
-          }
+            text: 'này là lượng từ, dùng với các danh từ như gia đình, cửa hàng',
+          },
         ],
         correct_matches: [
           { item_id: 1, definition_id: 1 },
           { item_id: 2, definition_id: 2 },
           { item_id: 3, definition_id: 3 },
-          { item_id: 4, definition_id: 4 }
-        ]
+          { item_id: 4, definition_id: 4 },
+        ],
       },
       isActive: true,
     });
@@ -560,7 +570,6 @@ async function seedComprehensiveLesson() {
     console.log(`Lesson ID: ${savedLesson.id}`);
     console.log('Created content items: 2');
     console.log('Created question items: 6');
-
   } catch (error) {
     console.error('Error during comprehensive seeding:', error);
   } finally {

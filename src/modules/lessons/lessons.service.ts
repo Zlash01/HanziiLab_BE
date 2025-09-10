@@ -16,7 +16,10 @@ import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { GetLessonsQueryDto } from './dto/get-lessons-query.dto';
 import { CreateLessonWordDto } from './dto/lesson-word.dto';
 import { CreateLessonGrammarPatternDto } from './dto/lesson-grammar-pattern.dto';
-import { CreateLessonItemDto, LessonItemType } from './dto/create-lesson-item.dto';
+import {
+  CreateLessonItemDto,
+  LessonItemType,
+} from './dto/create-lesson-item.dto';
 import { ContentService } from './content.service';
 import { QuestionsService } from './questions.service';
 
@@ -41,16 +44,26 @@ export class LessonsService {
   ) {}
 
   async createLesson(createLessonDto: CreateLessonDto): Promise<Lessons> {
-    const { words, grammarPatterns, ...lessonData } = createLessonDto;
+    const {
+      words,
+      grammarPatterns,
+      ...lessonData
+    }: {
+      words?: CreateLessonWordDto[];
+      grammarPatterns?: CreateLessonGrammarPatternDto[];
+    } & Omit<CreateLessonDto, 'words' | 'grammarPatterns'> = createLessonDto;
 
     // Auto-increment orderIndex within course if not provided
     if (!lessonData.orderIndex) {
-      const maxOrderIndex = await this.lessonsRepository
-        .createQueryBuilder('lesson')
-        .select('MAX(lesson.orderIndex)', 'maxOrder')
-        .where('lesson.courseId = :courseId', { courseId: lessonData.courseId })
-        .getRawOne();
-      
+      const maxOrderIndex: { maxOrder: number | null } | undefined =
+        await this.lessonsRepository
+          .createQueryBuilder('lesson')
+          .select('MAX(lesson.orderIndex)', 'maxOrder')
+          .where('lesson.courseId = :courseId', {
+            courseId: lessonData.courseId,
+          })
+          .getRawOne();
+
       lessonData.orderIndex = (maxOrderIndex?.maxOrder || 0) + 1;
     }
 
@@ -573,29 +586,38 @@ export class LessonsService {
     });
   }
 
-  async createLessonItem(createLessonItemDto: CreateLessonItemDto): Promise<any> {
-    const { itemType, contentType, questionType, ...commonData } = createLessonItemDto;
+  async createLessonItem(
+    createLessonItemDto: CreateLessonItemDto,
+  ): Promise<any> {
+    const { itemType, contentType, questionType, ...commonData } =
+      createLessonItemDto;
 
     if (itemType === LessonItemType.CONTENT) {
       if (!contentType) {
-        throw new BadRequestException('contentType is required when itemType is "content"');
+        throw new BadRequestException(
+          'contentType is required when itemType is "content"',
+        );
       }
-      
+
       return this.contentService.create({
         ...commonData,
         type: contentType,
       });
     } else if (itemType === LessonItemType.QUESTION) {
       if (!questionType) {
-        throw new BadRequestException('questionType is required when itemType is "question"');
+        throw new BadRequestException(
+          'questionType is required when itemType is "question"',
+        );
       }
-      
+
       return this.questionsService.create({
         ...commonData,
         questionType: questionType,
       });
     } else {
-      throw new BadRequestException('Invalid itemType. Must be "content" or "question"');
+      throw new BadRequestException(
+        'Invalid itemType. Must be "content" or "question"',
+      );
     }
   }
 }
