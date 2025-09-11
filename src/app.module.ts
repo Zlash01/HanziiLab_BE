@@ -20,6 +20,9 @@ import { LessonGrammarPattern } from './modules/lessons/entities/lesson-grammar-
 import { Content } from './modules/lessons/entities/content.entity';
 import { Question } from './modules/lessons/entities/question.entity';
 import { UserLessonProgress } from './modules/users/entities/user-lesson-progress.entity';
+import { Embedding } from './modules/rag/entities/embedding.entity';
+import { RagContext } from './modules/rag/entities/rag-context.entity';
+import { RagModule } from './modules/rag/rag.module';
 
 @Module({
   imports: [
@@ -61,6 +64,8 @@ import { UserLessonProgress } from './modules/users/entities/user-lesson-progres
             Content,
             Question,
             UserLessonProgress,
+            Embedding,
+            RagContext,
           ],
           synchronize: true,
         };
@@ -72,6 +77,7 @@ import { UserLessonProgress } from './modules/users/entities/user-lesson-progres
     WordsModule,
     GrammarModule,
     LessonsModule,
+    RagModule,
   ],
 })
 export class AppModule {}

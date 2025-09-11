@@ -7,7 +7,12 @@
       "Read(/C:\\Users\\Zlash01\\Desktop\\FinalThesis\\chinese_backend\\chinese-backend-mysql\\src\\modules\\lessons\\entities/**)",
       "Read(/C:\\Users\\Zlash01\\Desktop\\FinalThesis\\chinese_backend\\chinese-backend-mysql\\src/**)",
       "Bash(npm run lint)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 15 npm run start:dev)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(pip uninstall:*)"
     ],
     "deny": [],
     "ask": []
