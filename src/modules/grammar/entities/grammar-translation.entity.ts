@@ -26,11 +26,8 @@ export class GrammarTranslation {
   @Column({ type: 'text' })
   explanation: string;
 
-  @Column({ name: 'when_to_use', type: 'text', nullable: true })
-  whenToUse: string;
-
-  @Column({ name: 'common_mistakes', type: 'text', nullable: true })
-  commonMistakes: string;
+  @Column({ name: 'example', type: 'json', nullable: true })
+  example: any;
 
   @ManyToOne('GrammarPattern', 'translations', {
     onDelete: 'CASCADE',

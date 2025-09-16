@@ -32,12 +32,13 @@ export class CoursesService {
 
     // Auto-increment orderIndex if not provided
     if (!createCourseDto.orderIndex) {
-      const maxOrderIndex = await this.coursesRepository
+      const result = await this.coursesRepository
         .createQueryBuilder('course')
         .select('MAX(course.orderIndex)', 'maxOrder')
-        .getRawOne();
-      
-      createCourseDto.orderIndex = (maxOrderIndex?.maxOrder || 0) + 1;
+        .getRawOne<{ maxOrder: number | null }>();
+
+      const maxOrder = result?.maxOrder ?? 0;
+      createCourseDto.orderIndex = maxOrder + 1;
     } else {
       // Check if order index is already taken
       const existingCourse = await this.coursesRepository.findOne({

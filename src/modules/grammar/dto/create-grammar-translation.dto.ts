@@ -16,10 +16,5 @@ export class CreateGrammarTranslationDto {
   explanation: string;
 
   @IsOptional()
-  @IsString()
-  whenToUse?: string;
-
-  @IsOptional()
-  @IsString()
-  commonMistakes?: string;
+  example?: any;
 }
