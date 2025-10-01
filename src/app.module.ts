@@ -23,6 +23,7 @@ import { UserLessonProgress } from './modules/users/entities/user-lesson-progres
 import { Embedding } from './modules/rag/entities/embedding.entity';
 import { RagContext } from './modules/rag/entities/rag-context.entity';
 import { RagModule } from './modules/rag/rag.module';
+import { FileUploadModule } from './modules/file-upload/file-upload.module';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { RagModule } from './modules/rag/rag.module';
     GrammarModule,
     LessonsModule,
     RagModule,
+    FileUploadModule,
   ],
 })
 export class AppModule {}

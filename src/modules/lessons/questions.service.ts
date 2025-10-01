@@ -15,10 +15,10 @@ export class QuestionsService {
   ) {}
 
   async create(createQuestionDto: CreateQuestionDto): Promise<Question> {
-    if (createQuestionDto.orderIndex === undefined) {
+    if (createQuestionDto.orderIndex === undefined || createQuestionDto.orderIndex === null) {
       createQuestionDto.orderIndex = await this.orderIndexService.getNextOrderIndex(createQuestionDto.lessonId);
     }
-    
+
     const question = this.questionRepository.create(createQuestionDto);
     return await this.questionRepository.save(question);
   }
