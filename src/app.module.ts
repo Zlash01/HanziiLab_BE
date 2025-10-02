@@ -24,6 +24,7 @@ import { Embedding } from './modules/rag/entities/embedding.entity';
 import { RagContext } from './modules/rag/entities/rag-context.entity';
 import { RagModule } from './modules/rag/rag.module';
 import { FileUploadModule } from './modules/file-upload/file-upload.module';
+import { TtsModule } from './modules/tts/tts.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { FileUploadModule } from './modules/file-upload/file-upload.module';
     LessonsModule,
     RagModule,
     FileUploadModule,
+    TtsModule,
   ],
 })
 export class AppModule {}
