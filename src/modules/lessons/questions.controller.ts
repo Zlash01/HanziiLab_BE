@@ -41,11 +41,18 @@ export class QuestionsController {
     return this.questionsService.findByLessonId(lessonId);
   }
 
+  @ApiOperation({ summary: 'Get question by ID' })
+  @ApiResponse({ status: 200, description: 'Question retrieved successfully' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Question ID' })
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.questionsService.findOne(id);
   }
 
+  @ApiOperation({ summary: 'Update lesson question' })
+  @ApiResponse({ status: 200, description: 'Question updated successfully' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Question ID' })
+  @ApiBody({ type: UpdateQuestionDto })
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -54,11 +61,17 @@ export class QuestionsController {
     return this.questionsService.update(id, updateQuestionDto);
   }
 
+  @ApiOperation({ summary: 'Soft delete lesson question' })
+  @ApiResponse({ status: 200, description: 'Question soft deleted successfully' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Question ID' })
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.questionsService.remove(id);
   }
 
+  @ApiOperation({ summary: 'Permanently delete lesson question' })
+  @ApiResponse({ status: 200, description: 'Question permanently deleted successfully' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Question ID' })
   @Delete(':id/hard')
   hardDelete(@Param('id', ParseIntPipe) id: number) {
     return this.questionsService.hardDelete(id);

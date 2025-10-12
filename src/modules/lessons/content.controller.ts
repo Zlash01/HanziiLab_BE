@@ -41,11 +41,18 @@ export class ContentController {
     return this.contentService.findByLessonId(lessonId);
   }
 
+  @ApiOperation({ summary: 'Get content by ID' })
+  @ApiResponse({ status: 200, description: 'Content retrieved successfully' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Content ID' })
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.contentService.findOne(id);
   }
 
+  @ApiOperation({ summary: 'Update lesson content' })
+  @ApiResponse({ status: 200, description: 'Content updated successfully' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Content ID' })
+  @ApiBody({ type: UpdateContentDto })
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -54,11 +61,17 @@ export class ContentController {
     return this.contentService.update(id, updateContentDto);
   }
 
+  @ApiOperation({ summary: 'Soft delete lesson content' })
+  @ApiResponse({ status: 200, description: 'Content soft deleted successfully' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Content ID' })
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.contentService.remove(id);
   }
 
+  @ApiOperation({ summary: 'Permanently delete lesson content' })
+  @ApiResponse({ status: 200, description: 'Content permanently deleted successfully' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Content ID' })
   @Delete(':id/hard')
   hardDelete(@Param('id', ParseIntPipe) id: number) {
     return this.contentService.hardDelete(id);
