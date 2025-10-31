@@ -16,11 +16,6 @@ export class CreateWordSenseDto {
   wordId: number;
 
   @IsNotEmpty()
-  @IsInt()
-  @Min(1)
-  senseNumber: number;
-
-  @IsNotEmpty()
   @IsString()
   @MaxLength(100)
   pinyin: string;
@@ -37,16 +32,16 @@ export class CreateWordSenseDto {
   hskLevel?: number;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  usageContext?: string;
-
-  @IsOptional()
   @IsBoolean()
   isPrimary?: boolean = false;
 
   @IsOptional()
   @IsString()
-  @MaxLength(200)
-  exampleContext?: string;
+  @MaxLength(500)
+  imageUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  audioUrl?: string;
 }

@@ -59,7 +59,7 @@ export class ContentExtractionService {
           const translations = sense.translations
             .map(t => `${t.translation} (${t.language})`)
             .join(', ');
-          return `${sense.partOfSpeech || ''} ${sense.exampleContext || ''} Translations: ${translations}`.trim();
+          return `${sense.partOfSpeech || ''} Translations: ${translations}`.trim();
         })
         .join(' | ');
 
@@ -72,8 +72,6 @@ export class ContentExtractionService {
         metadata: {
           simplified: word.simplified,
           traditional: word.traditional,
-          isCompound: word.isCompound,
-          characterCount: word.characterCount,
           sensesCount: word.senses.length,
         },
       });
@@ -111,7 +109,6 @@ export class ContentExtractionService {
           patternPinyin: pattern.patternPinyin,
           patternFormula: pattern.patternFormula,
           hskLevel: pattern.hskLevel,
-          difficultyLevel: pattern.difficultyLevel,
           translationsCount: pattern.translations.length,
         },
       });

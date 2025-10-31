@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, LessThan, LessThanOrEqual } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { UserLessonProgress, LessonProgressStatus } from './entities/user-lesson-progress.entity';
 import { User } from './entities/user.entity';
 import { Lessons } from '../lessons/entities/lesson.entities';
@@ -20,7 +20,7 @@ export class UserProgressService {
   ) {}
 
   // Mark lesson as completed
-  async completeLesson(userId: number, lessonId: number): Promise<UserLessonProgress> {
+  async completeLesson(userId: number, lessonId: number, scorePercentage: number): Promise<UserLessonProgress> {
     // Verify user and lesson exist
     const [user, lesson] = await Promise.all([
       this.userRepository.findOne({ where: { id: userId } }),
@@ -39,19 +39,75 @@ export class UserProgressService {
       where: { userId, lessonId },
     });
 
+    const now = new Date();
+
     if (!progress) {
       progress = this.userLessonProgressRepository.create({
         userId,
         lessonId,
         status: LessonProgressStatus.COMPLETED,
-        completedAt: new Date(),
+        scorePercentage,
+        completedAt: now,
       });
     } else {
       progress.status = LessonProgressStatus.COMPLETED;
-      progress.completedAt = new Date();
+      progress.scorePercentage = scorePercentage;
+      progress.completedAt = now;
     }
 
-    return this.userLessonProgressRepository.save(progress);
+    const savedProgress = await this.userLessonProgressRepository.save(progress);
+
+    // Update study streak automatically
+    await this.updateStudyStreak(userId, now);
+
+    return savedProgress;
+  }
+
+  // Update study streak logic (private method)
+  private async updateStudyStreak(userId: number, currentDate: Date): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      return;
+    }
+
+    const today = new Date(currentDate);
+    today.setHours(0, 0, 0, 0); // Normalize to start of day
+
+    // If no last study date, this is the first study session
+    if (!user.lastStudyDate) {
+      user.currentStreak = 1;
+      user.longestStreak = 1;
+      user.totalStudyDays = 1;
+      user.lastStudyDate = today;
+      await this.userRepository.save(user);
+      return;
+    }
+
+    const lastStudy = new Date(user.lastStudyDate);
+    lastStudy.setHours(0, 0, 0, 0); // Normalize to start of day
+
+    const daysDifference = Math.floor((today.getTime() - lastStudy.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysDifference === 0) {
+      // Same day, no changes to streak but they studied
+      return;
+    } else if (daysDifference === 1) {
+      // Next consecutive day - increment streak
+      user.currentStreak += 1;
+      user.totalStudyDays += 1;
+    } else {
+      // More than 1 day gap - reset streak
+      user.currentStreak = 1;
+      user.totalStudyDays += 1;
+    }
+
+    // Update longest streak if current exceeds it
+    if (user.currentStreak > user.longestStreak) {
+      user.longestStreak = user.currentStreak;
+    }
+
+    user.lastStudyDate = today;
+    await this.userRepository.save(user);
   }
 
   // Get user's progress for a specific lesson
@@ -63,161 +119,65 @@ export class UserProgressService {
   }
 
   // Get user's progress for all lessons in a course
-  async getCourseProgress(userId: number, courseId: number): Promise<{
-    totalLessons: number;
-    completedLessons: number;
-    progress: UserLessonProgress[];
-  }> {
+  async getCourseProgress(userId: number, courseId: number): Promise<Array<{
+    lessonId: number;
+    name: string;
+    status: LessonProgressStatus;
+    scorePercentage: number | null;
+    completedAt: Date | null;
+  }>> {
     // Get all lessons in the course
     const lessons = await this.lessonsRepository.find({
       where: { courseId, isActive: true },
       order: { orderIndex: 'ASC' },
     });
 
-    const totalLessons = lessons.length;
-
-    if (totalLessons === 0) {
-      return { totalLessons: 0, completedLessons: 0, progress: [] };
+    if (lessons.length === 0) {
+      return [];
     }
 
     const lessonIds = lessons.map(lesson => lesson.id);
 
     // Get user's progress for these lessons
-    const progress = await this.userLessonProgressRepository.find({
+    const progressRecords = await this.userLessonProgressRepository.find({
       where: { userId, lessonId: In(lessonIds) },
-      relations: ['lesson'],
-      order: { lesson: { orderIndex: 'ASC' } },
     });
 
-    const completedLessons = progress.filter(p => p.status === LessonProgressStatus.COMPLETED).length;
+    // Create a map for quick lookup
+    const progressMap = new Map<number, UserLessonProgress>();
+    progressRecords.forEach(p => progressMap.set(p.lessonId, p));
 
-    return { totalLessons, completedLessons, progress };
+    // Build response with all lessons
+    return lessons.map(lesson => {
+      const progress = progressMap.get(lesson.id);
+      return {
+        lessonId: lesson.id,
+        name: lesson.name,
+        status: progress?.status || LessonProgressStatus.NOT_STARTED,
+        scorePercentage: progress?.scorePercentage ?? null,
+        completedAt: progress?.completedAt ?? null,
+      };
+    });
   }
 
-  // Get user's overall progress across all courses
-  async getUserOverallProgress(userId: number): Promise<{
-    courses: Array<{
-      courseId: number;
-      courseName: string;
-      totalLessons: number;
-      completedLessons: number;
-      isCompleted: boolean;
-    }>;
+  // Get user's study info (streak and study days)
+  async getStudyInfo(userId: number): Promise<{
+    currentStreak: number;
+    longestStreak: number;
+    totalStudyDays: number;
+    lastStudyDate: Date | null;
   }> {
-    const courses = await this.coursesRepository.find({
-      where: { isActive: true },
-      order: { hskLevel: 'ASC', orderIndex: 'ASC' },
-    });
-
-    const courseProgress = await Promise.all(
-      courses.map(async (course) => {
-        const { totalLessons, completedLessons } = await this.getCourseProgress(userId, course.id);
-        return {
-          courseId: course.id,
-          courseName: course.title,
-          totalLessons,
-          completedLessons,
-          isCompleted: completedLessons === totalLessons && totalLessons > 0,
-        };
-      })
-    );
-
-    return { courses: courseProgress };
-  }
-
-  // Get next lesson user should study (sequential progression)
-  async getNextLesson(userId: number): Promise<Lessons | null> {
-    // Get user's current HSK level
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    // Get courses for current HSK level and below, in order
-    const courses = await this.coursesRepository.find({
-      where: { hskLevel: LessThanOrEqual(user.currentHskLevel), isActive: true },
-      order: { hskLevel: 'ASC', orderIndex: 'ASC' },
-    });
-
-    for (const course of courses) {
-      // Check if course prerequisites are met
-      if (course.prerequisiteCourseId) {
-        const { completedLessons, totalLessons } = await this.getCourseProgress(userId, course.prerequisiteCourseId);
-        if (completedLessons !== totalLessons || totalLessons === 0) {
-          continue; // Skip this course, prerequisite not completed
-        }
-      }
-
-      // Get lessons in this course
-      const lessons = await this.lessonsRepository.find({
-        where: { courseId: course.id, isActive: true },
-        order: { orderIndex: 'ASC' },
-      });
-
-      // Find first incomplete lesson
-      for (const lesson of lessons) {
-        const progress = await this.userLessonProgressRepository.findOne({
-          where: { userId, lessonId: lesson.id },
-        });
-
-        if (!progress || progress.status !== LessonProgressStatus.COMPLETED) {
-          return lesson;
-        }
-      }
-    }
-
-    return null; // No next lesson available
+    return {
+      currentStreak: user.currentStreak,
+      longestStreak: user.longestStreak,
+      totalStudyDays: user.totalStudyDays,
+      lastStudyDate: user.lastStudyDate,
+    };
   }
 
-  // Check if user can access a lesson (prerequisites met)
-  async canAccessLesson(userId: number, lessonId: number): Promise<boolean> {
-    const lesson = await this.lessonsRepository.findOne({
-      where: { id: lessonId },
-      relations: ['course'],
-    });
-
-    if (!lesson) {
-      return false;
-    }
-
-    // Get user
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      return false;
-    }
-
-    // Check HSK level requirement
-    if (lesson.course.hskLevel > user.currentHskLevel) {
-      return false;
-    }
-
-    // Check course prerequisite
-    if (lesson.course.prerequisiteCourseId) {
-      const { completedLessons, totalLessons } = await this.getCourseProgress(userId, lesson.course.prerequisiteCourseId);
-      if (completedLessons !== totalLessons || totalLessons === 0) {
-        return false;
-      }
-    }
-
-    // Check if previous lessons in same course are completed
-    const previousLessons = await this.lessonsRepository.find({
-      where: { 
-        courseId: lesson.courseId, 
-        orderIndex: LessThan(lesson.orderIndex),
-        isActive: true 
-      },
-    });
-
-    for (const prevLesson of previousLessons) {
-      const progress = await this.userLessonProgressRepository.findOne({
-        where: { userId, lessonId: prevLesson.id },
-      });
-
-      if (!progress || progress.status !== LessonProgressStatus.COMPLETED) {
-        return false;
-      }
-    }
-
-    return true;
-  }
 }

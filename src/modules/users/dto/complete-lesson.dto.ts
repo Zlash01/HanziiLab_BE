@@ -1,4 +1,4 @@
-import { IsInt, Min } from 'class-validator';
+import { IsInt, Min, IsNumber, Max } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CompleteLessonDto {
@@ -11,4 +11,16 @@ export class CompleteLessonDto {
   @IsInt()
   @Min(1)
   lessonId: number;
+
+  @ApiProperty({
+    description: 'Score percentage (0-100) for the lesson completion',
+    example: 85.5,
+    minimum: 0,
+    maximum: 100,
+    type: Number,
+  })
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  scorePercentage: number;
 }

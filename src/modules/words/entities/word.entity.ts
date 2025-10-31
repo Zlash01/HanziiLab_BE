@@ -30,22 +30,6 @@ export class Word {
   })
   traditional: string;
 
-  @Column({
-    name: 'is_compound',
-    type: 'boolean',
-    default: false,
-    comment: 'true if multiple characters like 中文',
-  })
-  isCompound: boolean;
-
-  @Column({
-    name: 'character_count',
-    type: 'int',
-    nullable: false,
-    comment: 'How many characters',
-  })
-  characterCount: number;
-
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 

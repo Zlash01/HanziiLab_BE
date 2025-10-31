@@ -14,7 +14,6 @@ import {
   HttpCode,
   HttpStatus,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { UsersService } from './users.service';
@@ -277,15 +276,15 @@ export class UsersController {
   }
 
   // Progress tracking endpoints
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Mark lesson as completed',
-    description: 'Mark a specific lesson as completed for the current user'
+    description: 'Mark a specific lesson as completed with score percentage. Automatically updates study streak.'
   })
-  @ApiOkResponse({ description: 'Lesson marked as completed successfully' })
-  @ApiBadRequestResponse({ description: 'Invalid lesson ID or user cannot access this lesson' })
+  @ApiOkResponse({ description: 'Lesson marked as completed successfully and streak updated' })
+  @ApiBadRequestResponse({ description: 'Invalid lesson ID or score percentage' })
   @ApiNotFoundResponse({ description: 'Lesson not found' })
   @ApiBody({ type: CompleteLessonDto })
-  // POST /users/progress/complete
+  // PUT /users/progress/complete
   @Put('progress/complete')
   @Roles(Role.User, Role.Admin)
   async completeLesson(
@@ -293,18 +292,11 @@ export class UsersController {
     @Body() completeLessonDto: CompleteLessonDto,
   ) {
     const user = req.user as JwtPayload;
-    
-    // Check if user can access this lesson
-    const canAccess = await this.userProgressService.canAccessLesson(
-      user.id, 
-      completeLessonDto.lessonId
+    return this.userProgressService.completeLesson(
+      user.id,
+      completeLessonDto.lessonId,
+      completeLessonDto.scorePercentage
     );
-    
-    if (!canAccess) {
-      throw new BadRequestException('You cannot access this lesson yet. Complete prerequisites first.');
-    }
-    
-    return this.userProgressService.completeLesson(user.id, completeLessonDto.lessonId);
   }
 
   @ApiOperation({ 
@@ -325,11 +317,26 @@ export class UsersController {
     return this.userProgressService.getLessonProgress(user.id, lessonId);
   }
 
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get course progress',
-    description: 'Get progress for all lessons in a specific course'
+    description: 'Get status of all lessons in a course with completion details and scores'
   })
-  @ApiOkResponse({ description: 'Course progress retrieved successfully' })
+  @ApiOkResponse({
+    description: 'Course progress retrieved successfully',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          lessonId: { type: 'number', example: 1 },
+          name: { type: 'string', example: 'Introduction to Pinyin' },
+          status: { type: 'string', enum: ['not_started', 'completed'], example: 'completed' },
+          scorePercentage: { type: 'number', nullable: true, example: 85.5 },
+          completedAt: { type: 'string', format: 'date-time', nullable: true }
+        }
+      }
+    }
+  })
   @ApiParam({ name: 'courseId', type: 'number', description: 'Course ID' })
   // GET /users/progress/course/:courseId
   @Get('progress/course/:courseId')
@@ -342,53 +349,27 @@ export class UsersController {
     return this.userProgressService.getCourseProgress(user.id, courseId);
   }
 
-  @ApiOperation({ 
-    summary: 'Get overall progress',
-    description: 'Get overall progress across all courses for the current user'
+  @ApiOperation({
+    summary: 'Get study info',
+    description: 'Get study streak and study days information for the current user'
   })
-  @ApiOkResponse({ description: 'Overall progress retrieved successfully' })
-  // GET /users/progress/overall
-  @Get('progress/overall')
-  @Roles(Role.User, Role.Admin)
-  async getOverallProgress(@Req() req: Request) {
-    const user = req.user as JwtPayload;
-    return this.userProgressService.getUserOverallProgress(user.id);
-  }
-
-  @ApiOperation({ 
-    summary: 'Get next lesson to study',
-    description: 'Get the next lesson the user should study based on sequential progression'
-  })
-  @ApiOkResponse({ description: 'Next lesson retrieved successfully' })
-  // GET /users/progress/next-lesson
-  @Get('progress/next-lesson')
-  @Roles(Role.User, Role.Admin)
-  async getNextLesson(@Req() req: Request) {
-    const user = req.user as JwtPayload;
-    const nextLesson = await this.userProgressService.getNextLesson(user.id);
-    
-    if (!nextLesson) {
-      return { message: 'No more lessons available', nextLesson: null };
+  @ApiOkResponse({
+    description: 'Study info retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        currentStreak: { type: 'number', example: 7, description: 'Current consecutive study days' },
+        longestStreak: { type: 'number', example: 23, description: 'Best streak achieved' },
+        totalStudyDays: { type: 'number', example: 45, description: 'Total days studied' },
+        lastStudyDate: { type: 'string', format: 'date', nullable: true, example: '2024-01-15' }
+      }
     }
-    
-    return { nextLesson };
-  }
-
-  @ApiOperation({ 
-    summary: 'Check lesson accessibility',
-    description: 'Check if user can access a specific lesson (prerequisites met)'
   })
-  @ApiOkResponse({ description: 'Lesson accessibility checked successfully' })
-  @ApiParam({ name: 'lessonId', type: 'number', description: 'Lesson ID' })
-  // GET /users/progress/can-access/:lessonId
-  @Get('progress/can-access/:lessonId')
+  // GET /users/progress/study-info
+  @Get('progress/study-info')
   @Roles(Role.User, Role.Admin)
-  async canAccessLesson(
-    @Req() req: Request,
-    @Param('lessonId', ParseIntPipe) lessonId: number,
-  ) {
+  async getStudyInfo(@Req() req: Request) {
     const user = req.user as JwtPayload;
-    const canAccess = await this.userProgressService.canAccessLesson(user.id, lessonId);
-    return { canAccess };
+    return this.userProgressService.getStudyInfo(user.id);
   }
 }

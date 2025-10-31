@@ -22,7 +22,8 @@
     "seed:grammar": "ts-node -r tsconfig-paths/register src/seeds/grammar.seed.ts",
     "seed:lessons": "ts-node -r tsconfig-paths/register src/seeds/lessons.seed.ts",
     "seed:lessons:comprehensive": "ts-node -r tsconfig-paths/register src/seeds/lessons.seed.ts comprehensive",
-    "verify:lessons": "ts-node -r tsconfig-paths/register src/seeds/verify-lesson.seed.ts"
+    "verify:lessons": "ts-node -r tsconfig-paths/register src/seeds/verify-lesson.seed.ts",
+    "migrate:question-types": "ts-node -r tsconfig-paths/register src/seeds/migrate-question-types.seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.896.0",

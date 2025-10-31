@@ -10,17 +10,6 @@ export class GetWordsQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  characterCount?: number;
-
-  @IsOptional()
-  @Type(() => Boolean)
-  @IsBoolean()
-  isCompound?: boolean;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
   page?: number = 1;
 
   @IsOptional()

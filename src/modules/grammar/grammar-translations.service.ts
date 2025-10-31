@@ -65,11 +65,16 @@ export class GrammarTranslationsService {
     }
 
     if (search) {
-      // Search in title, explanation, or usage notes
-      where.title = Like(`%${search}%`);
+      // Search in grammarPoint or explanation
+      where.grammarPoint = Like(`%${search}%`);
     }
 
-    const validSortFields = ['id', 'language', 'title', 'grammarPatternId'];
+    const validSortFields = [
+      'id',
+      'language',
+      'grammarPoint',
+      'grammarPatternId',
+    ];
     const orderField = validSortFields.includes(sortBy) ? sortBy : 'id';
     const orderDirection = sortOrder === 'DESC' ? 'DESC' : 'ASC';
 

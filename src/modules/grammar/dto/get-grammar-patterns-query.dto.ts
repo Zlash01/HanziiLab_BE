@@ -25,12 +25,6 @@ export class GetGrammarPatternsQueryDto {
   hskLevel?: number;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  difficultyLevel?: number;
-
-  @IsOptional()
   @IsString()
   sortBy?: string = 'id';
 

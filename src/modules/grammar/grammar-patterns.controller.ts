@@ -14,6 +14,8 @@ import { GrammarPatternsService } from './grammar-patterns.service';
 import { CreateGrammarPatternDto } from './dto/create-grammar-pattern.dto';
 import { UpdateGrammarPatternDto } from './dto/update-grammar-pattern.dto';
 import { GetGrammarPatternsQueryDto } from './dto/get-grammar-patterns-query.dto';
+import { CreateCompleteGrammarPatternDto } from './dto/create-complete-grammar-pattern.dto';
+import { UpdateCompleteGrammarPatternDto } from './dto/update-complete-grammar-pattern.dto';
 import { JWTGuard } from '../auth/guard/jwt.guard';
 import { RolesGuard } from '../auth/guard/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -37,6 +39,23 @@ export class GrammarPatternsController {
   @Roles(Role.Admin)
   create(@Body() createGrammarPatternDto: CreateGrammarPatternDto) {
     return this.grammarPatternsService.create(createGrammarPatternDto);
+  }
+
+  @ApiOperation({
+    summary: 'Create complete grammar pattern with translation (Admin only)',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Complete pattern created successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request - Missing required data' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 409, description: 'Conflict - Translation already exists for language' })
+  @ApiBody({ type: CreateCompleteGrammarPatternDto })
+  @Post('complete')
+  @Roles(Role.Admin)
+  async createComplete(@Body() dto: CreateCompleteGrammarPatternDto) {
+    return this.grammarPatternsService.createComplete(dto);
   }
 
   @ApiOperation({ summary: 'Get all grammar patterns with pagination and filters' })
@@ -76,6 +95,28 @@ export class GrammarPatternsController {
     @Body() updateGrammarPatternDto: UpdateGrammarPatternDto,
   ) {
     return this.grammarPatternsService.update(id, updateGrammarPatternDto);
+  }
+
+  @ApiOperation({
+    summary: 'Update complete grammar pattern by translation ID (Admin only)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Complete pattern updated successfully',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 404, description: 'Grammar translation not found' })
+  @ApiBody({ type: UpdateCompleteGrammarPatternDto })
+  @Patch('translations/:translationId')
+  @Roles(Role.Admin)
+  async updateCompleteByTranslationId(
+    @Param('translationId', ParseIntPipe) translationId: number,
+    @Body() dto: UpdateCompleteGrammarPatternDto,
+  ) {
+    return this.grammarPatternsService.updateCompleteByTranslationId(
+      translationId,
+      dto,
+    );
   }
 
   @Delete(':id')

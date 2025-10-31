@@ -9,7 +9,7 @@ export class UpdateGrammarTranslationDto {
   @IsOptional()
   @IsString()
   @Length(1, 200)
-  title?: string;
+  grammarPoint?: string;
 
   @IsOptional()
   @IsString()

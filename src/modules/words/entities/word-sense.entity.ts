@@ -54,15 +54,6 @@ export class WordSense {
   hskLevel: number;
 
   @Column({
-    name: 'usage_context',
-    type: 'varchar',
-    length: 100,
-    nullable: true,
-    comment: 'formal, casual, etc.',
-  })
-  usageContext: string;
-
-  @Column({
     name: 'is_primary',
     type: 'boolean',
     default: false,
@@ -71,13 +62,22 @@ export class WordSense {
   isPrimary: boolean;
 
   @Column({
-    name: 'example_context',
+    name: 'image_url',
     type: 'varchar',
-    length: 200,
+    length: 500,
     nullable: true,
-    comment: '打电话 (make phone call)',
+    comment: 'URL to image resource',
   })
-  exampleContext: string;
+  imageUrl: string;
+
+  @Column({
+    name: 'audio_url',
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+    comment: 'URL to audio resource',
+  })
+  audioUrl: string;
 
   // Relations
   @ManyToOne('Word', 'senses', { onDelete: 'CASCADE' })

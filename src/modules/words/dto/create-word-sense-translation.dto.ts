@@ -13,10 +13,10 @@ export class CreateWordSenseTranslationDto {
   @Min(1)
   wordSenseId: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   @MaxLength(5)
-  language: string;
+  language?: string = 'vn';
 
   @IsNotEmpty()
   @IsString()
@@ -24,5 +24,5 @@ export class CreateWordSenseTranslationDto {
 
   @IsOptional()
   @IsString()
-  usageNotes?: string;
+  additionalDetail?: string;
 }

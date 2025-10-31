@@ -1,14 +1,25 @@
-import { IsString, IsInt, IsOptional, Length, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsInt,
+  IsOptional,
+  Length,
+  Min,
+  Max,
+  IsArray,
+  ArrayMinSize,
+} from 'class-validator';
 
 export class CreateGrammarPatternDto {
-  @IsString()
-  @Length(1, 200)
-  pattern: string;
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  pattern: string[];
 
   @IsOptional()
-  @IsString()
-  @Length(1, 200)
-  patternPinyin?: string;
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  patternPinyin?: string[];
 
   @IsOptional()
   @IsString()
@@ -20,10 +31,4 @@ export class CreateGrammarPatternDto {
   @Min(1)
   @Max(6)
   hskLevel?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(5)
-  difficultyLevel?: number;
 }

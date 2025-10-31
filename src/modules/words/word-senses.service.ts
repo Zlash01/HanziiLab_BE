@@ -17,22 +17,27 @@ export class WordSensesService {
     private wordSensesRepository: Repository<WordSense>,
   ) {}
 
-  // Create a new word sense
-  async create(createWordSenseDto: CreateWordSenseDto): Promise<WordSense> {
-    // Check if word sense with same word_id and sense_number already exists
-    const existingWordSense = await this.wordSensesRepository.findOne({
-      where: {
-        wordId: createWordSenseDto.wordId,
-        senseNumber: createWordSenseDto.senseNumber,
-      },
-    });
-    if (existingWordSense) {
-      throw new BadRequestException(
-        'Word sense with this word ID and sense number already exists',
-      );
-    }
+  // Get next sense number for a word
+  async getNextSenseNumber(wordId: number): Promise<number> {
+    const maxSenseNumber = await this.wordSensesRepository
+      .createQueryBuilder('wordSense')
+      .select('MAX(wordSense.senseNumber)', 'max')
+      .where('wordSense.wordId = :wordId', { wordId })
+      .getRawOne();
 
-    const wordSense = this.wordSensesRepository.create(createWordSenseDto);
+    return (maxSenseNumber?.max || 0) + 1;
+  }
+
+  // Create a new word sense (auto-generates senseNumber)
+  async create(createWordSenseDto: CreateWordSenseDto): Promise<WordSense> {
+    const nextSenseNumber = await this.getNextSenseNumber(
+      createWordSenseDto.wordId,
+    );
+
+    const wordSense = this.wordSensesRepository.create({
+      ...createWordSenseDto,
+      senseNumber: nextSenseNumber,
+    });
     return this.wordSensesRepository.save(wordSense);
   }
 
@@ -60,10 +65,9 @@ export class WordSensesService {
     }
 
     if (search) {
-      queryBuilder.andWhere(
-        '(wordSense.pinyin LIKE :search OR wordSense.exampleContext LIKE :search)',
-        { search: `%${search}%` },
-      );
+      queryBuilder.andWhere('(wordSense.pinyin LIKE :search)', {
+        search: `%${search}%`,
+      });
     }
 
     if (hskLevel !== undefined) {

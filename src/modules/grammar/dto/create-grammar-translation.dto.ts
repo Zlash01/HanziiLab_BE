@@ -10,7 +10,7 @@ export class CreateGrammarTranslationDto {
 
   @IsString()
   @Length(1, 200)
-  title: string;
+  grammarPoint: string;
 
   @IsString()
   explanation: string;

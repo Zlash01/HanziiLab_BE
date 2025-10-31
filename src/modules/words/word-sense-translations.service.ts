@@ -71,7 +71,7 @@ export class WordSenseTranslationsService {
 
     if (search) {
       queryBuilder.andWhere(
-        '(translation.translation LIKE :search OR translation.usageNotes LIKE :search)',
+        '(translation.translation LIKE :search OR translation.additionalDetail LIKE :search)',
         { search: `%${search}%` },
       );
     }

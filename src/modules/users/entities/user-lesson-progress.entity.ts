@@ -36,6 +36,9 @@ export class UserLessonProgress {
   })
   status: LessonProgressStatus;
 
+  @Column({ name: 'score_percentage', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  scorePercentage?: number;
+
   @Column({ name: 'completed_at', type: 'timestamp', nullable: true })
   completedAt?: Date;
 

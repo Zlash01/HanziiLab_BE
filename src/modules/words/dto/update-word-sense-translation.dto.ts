@@ -12,5 +12,5 @@ export class UpdateWordSenseTranslationDto {
 
   @IsOptional()
   @IsString()
-  usageNotes?: string;
+  additionalDetail?: string;
 }

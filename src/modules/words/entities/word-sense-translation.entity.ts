@@ -21,6 +21,7 @@ export class WordSenseTranslation {
     type: 'varchar',
     length: 5,
     nullable: false,
+    default: 'vn',
     comment: 'en, vn, th, etc.',
   })
   language: string;
@@ -33,12 +34,12 @@ export class WordSenseTranslation {
   translation: string;
 
   @Column({
-    name: 'usage_notes',
+    name: 'additional_detail',
     type: 'text',
     nullable: true,
-    comment: 'Extra explanation',
+    comment: 'Extra explanation or context',
   })
-  usageNotes: string;
+  additionalDetail: string;
 
   // Relations
   @ManyToOne('WordSense', 'translations', {

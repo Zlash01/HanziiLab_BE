@@ -20,8 +20,8 @@ export class GrammarTranslation {
   @Column({ type: 'varchar', length: 5 })
   language: string;
 
-  @Column({ type: 'varchar', length: 200 })
-  title: string;
+  @Column({ name: 'grammar_point', type: 'varchar', length: 200 })
+  grammarPoint: string;
 
   @Column({ type: 'text' })
   explanation: string;

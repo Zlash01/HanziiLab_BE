@@ -31,16 +31,16 @@ export class UpdateWordSenseDto {
   hskLevel?: number;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  usageContext?: string;
-
-  @IsOptional()
   @IsBoolean()
   isPrimary?: boolean;
 
   @IsOptional()
   @IsString()
-  @MaxLength(200)
-  exampleContext?: string;
+  @MaxLength(500)
+  imageUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  audioUrl?: string;
 }

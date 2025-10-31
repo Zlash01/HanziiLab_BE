@@ -171,7 +171,7 @@ export class DataExtractorService {
             partOfSpeech: sense.partOfSpeech,
             hskLevel: sense.hskLevel || 1,
             meaning: englishTranslation.translation,
-            example: sense.exampleContext || '',
+            example: '',
             text: this.buildWordText(
               word,
               sense,
@@ -274,12 +274,11 @@ export class DataExtractorService {
   }
 
   private buildWordText(word: Word, sense: any, translation: string): string {
-    return `Chinese word: ${word.simplified} ${word.traditional !== word.simplified ? `(Traditional: ${word.traditional})` : ''} 
+    return `Chinese word: ${word.simplified} ${word.traditional !== word.simplified ? `(Traditional: ${word.traditional})` : ''}
 Pinyin: ${sense.pinyin}
 Meaning: ${translation}
 Part of speech: ${sense.partOfSpeech}
-HSK Level: ${sense.hskLevel}
-Example: ${sense.exampleContext || 'No example available'}`;
+HSK Level: ${sense.hskLevel}`;
   }
 
   private buildGrammarText(pattern: GrammarPattern, translation: any): string {
@@ -357,7 +356,7 @@ export class ChunkerService {
       partOfSpeech: sense.partOfSpeech,
       hskLevel: sense.hskLevel || 1,
       meaning: translation,
-      example: sense.exampleContext || '',
+      example: '',
       text: this.buildWordText(word, sense, translation),
       sourceId: word.id,
     };
@@ -408,12 +407,11 @@ export class ChunkerService {
   }
 
   private buildWordText(word: any, sense: any, translation: string): string {
-    return `Chinese word: ${word.simplified} ${word.traditional !== word.simplified ? `(Traditional: ${word.traditional})` : ''} 
+    return `Chinese word: ${word.simplified} ${word.traditional !== word.simplified ? `(Traditional: ${word.traditional})` : ''}
 Pinyin: ${sense.pinyin}
 Meaning: ${translation}
 Part of speech: ${sense.partOfSpeech}
-HSK Level: ${sense.hskLevel}
-Example: ${sense.exampleContext || 'No example available'}`;
+HSK Level: ${sense.hskLevel}`;
   }
 
   private buildGrammarText(pattern: any, translation: any): string {
@@ -2268,7 +2266,7 @@ export class FineTuningService {
           },
           {
             role: 'assistant',
-            content: `${word.chinese} (${word.pinyin}) means "${word.meaning}". It's ${word.partOfSpeech ? `a ${word.partOfSpeech}` : 'used'} and is taught at HSK Level ${word.hskLevel}.${word.example ? ` Example usage: ${word.example}` : ''}`,
+            content: `${word.chinese} (${word.pinyin}) means "${word.meaning}". It's ${word.partOfSpeech ? `a ${word.partOfSpeech}` : 'used'} and is taught at HSK Level ${word.hskLevel}.`,
           },
         ],
       });
