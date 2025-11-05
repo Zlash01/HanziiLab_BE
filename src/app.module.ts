@@ -24,6 +24,8 @@ import { Embedding } from './modules/rag/entities/embedding.entity';
 import { RagContext } from './modules/rag/entities/rag-context.entity';
 import { RagModule } from './modules/rag/rag.module';
 import { FileUploadModule } from './modules/file-upload/file-upload.module';
+import { SrsModule } from './modules/srs/srs.module';
+import { UserQuestionReview } from './modules/srs/entities/user-question-review.entity';
 
 @Module({
   imports: [
@@ -67,6 +69,7 @@ import { FileUploadModule } from './modules/file-upload/file-upload.module';
             UserLessonProgress,
             Embedding,
             RagContext,
+            UserQuestionReview,
           ],
           synchronize: true,
         };
@@ -80,6 +83,7 @@ import { FileUploadModule } from './modules/file-upload/file-upload.module';
     LessonsModule,
     RagModule,
     FileUploadModule,
+    SrsModule,
   ],
 })
 export class AppModule {}

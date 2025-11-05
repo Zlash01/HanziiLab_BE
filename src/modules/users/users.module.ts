@@ -9,9 +9,13 @@ import { User } from './entities/user.entity';
 import { UserLessonProgress } from './entities/user-lesson-progress.entity';
 import { Lessons } from '../lessons/entities/lesson.entities';
 import { Courses } from '../courses/entities/course.entities';
+import { SrsModule } from '../srs/srs.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, UserLessonProgress, Lessons, Courses])],
+  imports: [
+    TypeOrmModule.forFeature([User, UserLessonProgress, Lessons, Courses]),
+    SrsModule,
+  ],
   controllers: [UsersController, AdminProgressController],
   providers: [UsersService, UserProgressService, AdminProgressService],
   exports: [UsersService, UserProgressService], // Export so other modules can use them

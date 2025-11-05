@@ -5,6 +5,7 @@ import { UserLessonProgress, LessonProgressStatus } from './entities/user-lesson
 import { User } from './entities/user.entity';
 import { Lessons } from '../lessons/entities/lesson.entities';
 import { Courses } from '../courses/entities/course.entities';
+import { SrsService } from '../srs/srs.service';
 
 @Injectable()
 export class UserProgressService {
@@ -17,6 +18,7 @@ export class UserProgressService {
     private lessonsRepository: Repository<Lessons>,
     @InjectRepository(Courses)
     private coursesRepository: Repository<Courses>,
+    private srsService: SrsService,
   ) {}
 
   // Mark lesson as completed
@@ -59,6 +61,15 @@ export class UserProgressService {
 
     // Update study streak automatically
     await this.updateStudyStreak(userId, now);
+
+    // Initialize questions for spaced repetition review (hybrid approach)
+    // Questions become reviewable after lesson completion
+    try {
+      await this.srsService.initializeLessonQuestionsForReview(userId, lessonId);
+    } catch (error) {
+      // Log error but don't fail the lesson completion
+      console.error('Failed to initialize SRS questions:', error);
+    }
 
     return savedProgress;
   }

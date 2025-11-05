@@ -356,30 +356,40 @@ export class LessonsService {
   async findCompleteLesson(id: number): Promise<any> {
     const lesson = await this.findOne(id);
 
-    const [content, questions] = await Promise.all([
+    const [content, questions, words, grammarPatterns] = await Promise.all([
       this.contentService.findByLessonId(id),
       this.questionsService.findByLessonId(id),
+      this.getLessonWords(id),
+      this.getLessonGrammarPatterns(id),
     ]);
 
-    // Combine content and questions into one array and sort by order_index
+    // Combine content and questions into one array and sort by orderIndex
     const combinedContent = [
       ...content.map((c) => ({
-        order_index: c.orderIndex,
+        id: c.id,
+        itemType: 'content',
+        orderIndex: c.orderIndex,
         type: c.type,
-        ...c.data,
+        isActive: c.isActive,
+        data: c.data,
       })),
       ...questions.map((q) => ({
-        order_index: q.orderIndex,
+        id: q.id,
+        itemType: 'question',
+        orderIndex: q.orderIndex,
         type: q.questionType,
-        ...q.data,
+        isActive: q.isActive,
+        data: q.data,
       })),
-    ].sort((a, b) => a.order_index - b.order_index);
+    ].sort((a, b) => a.orderIndex - b.orderIndex);
 
     return {
       id: lesson.id,
       name: lesson.name,
       description: lesson.description,
       content: combinedContent,
+      words: words,
+      grammarPatterns: grammarPatterns,
     };
   }
 
