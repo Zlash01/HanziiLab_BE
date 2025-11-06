@@ -182,7 +182,7 @@ GET /lessons/1
 
 **Endpoint:** `GET /lessons/content/:id`
 **Role:** Admin, User
-**Description:** Retrieve complete lesson including all content blocks and questions
+**Description:** Retrieve complete lesson including all content blocks, questions, words, and grammar patterns in display order
 
 **Example Request:**
 
@@ -197,12 +197,10 @@ GET /lessons/content/1
   "id": 1,
   "name": "Introduction to Greetings",
   "description": "Learn basic Chinese greetings and introductions",
-  "isActive": true,
-  "orderIndex": 1,
-  "courseId": 1,
-  "contents": [
+  "content": [
     {
       "id": 1,
+      "itemType": "content",
       "orderIndex": 0,
       "type": "content_word_definition",
       "isActive": true,
@@ -220,6 +218,7 @@ GET /lessons/content/1
     },
     {
       "id": 2,
+      "itemType": "content",
       "orderIndex": 1,
       "type": "content_sentences",
       "isActive": true,
@@ -232,13 +231,12 @@ GET /lessons/content/1
           }
         ]
       }
-    }
-  ],
-  "questions": [
+    },
     {
       "id": 1,
+      "itemType": "question",
       "orderIndex": 2,
-      "questionType": "question_selection_text_text",
+      "type": "question_selection_text_text",
       "isActive": true,
       "data": {
         "prompt": "What does '你好' mean?",
@@ -262,33 +260,59 @@ GET /lessons/content/1
   ],
   "words": [
     {
-      "wordSenseId": 1,
+      "id": 1,
+      "lessonId": 1,
+      "wordSenseId": 10,
       "isPrimary": true,
-      "orderIndex": 0,
+      "orderIndex": 1,
       "wordSense": {
-        "id": 1,
-        "definition": "Hello, hi",
+        "id": 10,
+        "wordId": 5,
+        "senseNumber": 1,
+        "pinyin": "nǐ hǎo",
+        "partOfSpeech": "phrase",
+        "hskLevel": 1,
+        "isPrimary": true,
+        "imageUrl": null,
+        "audioUrl": null,
         "word": {
+          "id": 5,
           "simplified": "你好",
-          "traditional": "你好",
-          "pinyin": "nǐ hǎo"
+          "traditional": "你好"
         }
       }
     }
   ],
   "grammarPatterns": [
     {
-      "grammarPatternId": 1,
+      "id": 1,
+      "lessonId": 1,
+      "grammarPatternId": 3,
       "isPrimary": true,
-      "orderIndex": 0,
+      "orderIndex": 1,
       "grammarPattern": {
-        "id": 1,
-        "pattern": "Subject + 好",
-        "description": "Basic greeting structure"
+        "id": 3,
+        "pattern": ["Subject", "verb", "object"],
+        "patternPinyin": ["Subject", "verb", "object"],
+        "patternFormula": "S + V + O",
+        "hskLevel": 1
       }
     }
   ]
 }
+```
+
+**Note:**
+- Items are returned in a single `content` array, sorted by `orderIndex`
+- Each item includes `id` (database ID), `itemType` ("content" or "question"), and `type`
+- Content and questions can have the same `id` since they're from different tables
+- Use `itemType` to determine which update endpoint to call:
+  - `itemType: "content"` → Update via `PATCH /content/:id`
+  - `itemType: "question"` → Update via `PATCH /questions/:id`
+- **NEW**: `words` array includes all words bound to this lesson with full word sense details
+- **NEW**: `grammarPatterns` array includes all grammar patterns bound to this lesson
+- Words and grammar patterns are sorted by their `orderIndex` within the lesson
+- `isPrimary` flag indicates focus vocabulary/grammar for the lesson
 ```
 
 ---
@@ -750,9 +774,203 @@ PATCH /lessons/1/restore
 
 ---
 
+## Update & Delete Lesson Items
+
+### 12. Update Content
+
+**Endpoint:** `PATCH /content/:id`
+**Role:** Admin only
+**Description:** Update an existing content item by its ID
+
+**Example Request:**
+```
+PATCH /content/1
+```
+
+**Request Body:**
+All fields are optional. Only include fields you want to update.
+
+```json
+{
+  "orderIndex": 0,
+  "type": "content_word_definition",
+  "data": {
+    "title": "Updated Colors Vocabulary",
+    "description": "Learn basic and advanced colors in Chinese",
+    "words": [
+      {
+        "chinese": "红色",
+        "pinyin": "hóngsè",
+        "english": "red",
+        "example": "红色的花 (hóngsè de huā) - red flower"
+      }
+    ]
+  }
+}
+```
+
+**Response (200):**
+```json
+{
+  "id": 1,
+  "lessonId": 1,
+  "orderIndex": 0,
+  "type": "content_word_definition",
+  "isActive": true,
+  "data": {
+    "title": "Updated Colors Vocabulary",
+    "description": "Learn basic and advanced colors in Chinese",
+    "words": [...]
+  }
+}
+```
+
+---
+
+### 13. Update Question
+
+**Endpoint:** `PATCH /questions/:id`
+**Role:** Admin only
+**Description:** Update an existing question by its ID
+
+**Example Request:**
+```
+PATCH /questions/1
+```
+
+**Request Body:**
+All fields are optional. Only include fields you want to update.
+
+```json
+{
+  "orderIndex": 2,
+  "questionType": "question_selection_text_text",
+  "data": {
+    "prompt": "What does '红色' mean in English?",
+    "options": [
+      { "id": "a", "text": "Red" },
+      { "id": "b", "text": "Blue" },
+      { "id": "c", "text": "Green" },
+      { "id": "d", "text": "Yellow" }
+    ],
+    "correctAnswer": "a",
+    "explanation": "红色 (hóngsè) means red in Chinese"
+  }
+}
+```
+
+**Response (200):**
+```json
+{
+  "id": 1,
+  "lessonId": 1,
+  "orderIndex": 2,
+  "questionType": "question_selection_text_text",
+  "isActive": true,
+  "data": {
+    "prompt": "What does '红色' mean in English?",
+    "options": [...],
+    "correctAnswer": "a",
+    "explanation": "红色 (hóngsè) means red in Chinese"
+  }
+}
+```
+
+---
+
+### 14. Delete Content (Soft Delete)
+
+**Endpoint:** `DELETE /content/:id`
+**Role:** Admin only
+**Description:** Soft delete a content item (marks as inactive)
+
+**Example Request:**
+```
+DELETE /content/1
+```
+
+**Response (200):**
+```json
+{
+  "id": 1,
+  "lessonId": 1,
+  "orderIndex": 0,
+  "type": "content_word_definition",
+  "isActive": false,
+  "data": {...}
+}
+```
+
+---
+
+### 15. Delete Question (Soft Delete)
+
+**Endpoint:** `DELETE /questions/:id`
+**Role:** Admin only
+**Description:** Soft delete a question (marks as inactive)
+
+**Example Request:**
+```
+DELETE /questions/1
+```
+
+**Response (200):**
+```json
+{
+  "id": 1,
+  "lessonId": 1,
+  "orderIndex": 2,
+  "questionType": "question_selection_text_text",
+  "isActive": false,
+  "data": {...}
+}
+```
+
+---
+
+### 16. Hard Delete Content
+
+**Endpoint:** `DELETE /content/:id/hard`
+**Role:** Admin only
+**Description:** Permanently delete a content item (cannot be restored)
+
+**Example Request:**
+```
+DELETE /content/1/hard
+```
+
+**Response (200):**
+```json
+{
+  "message": "Content permanently deleted"
+}
+```
+
+---
+
+### 17. Hard Delete Question
+
+**Endpoint:** `DELETE /questions/:id/hard`
+**Role:** Admin only
+**Description:** Permanently delete a question (cannot be restored)
+
+**Example Request:**
+```
+DELETE /questions/1/hard
+```
+
+**Response (200):**
+```json
+{
+  "message": "Question permanently deleted"
+}
+```
+
+---
+
 ## Word Management
 
-### 12. Get Lesson Words
+### 18. Get Lesson Words
 
 **Endpoint:** `GET /lessons/:id/words`
 **Role:** Admin, User
@@ -803,7 +1021,7 @@ GET /lessons/1/words
 
 ---
 
-### 13. Add Words to Lesson
+### 19. Add Words to Lesson
 
 **Endpoint:** `POST /lessons/:id/words`
 **Role:** Admin only
@@ -848,7 +1066,7 @@ GET /lessons/1/words
 
 ---
 
-### 14. Remove Words from Lesson
+### 20. Remove Words from Lesson
 
 **Endpoint:** `DELETE /lessons/:id/words`
 **Role:** Admin only
@@ -874,7 +1092,7 @@ GET /lessons/1/words
 
 ## Grammar Pattern Management
 
-### 15. Get Lesson Grammar Patterns
+### 21. Get Lesson Grammar Patterns
 
 **Endpoint:** `GET /lessons/:id/grammar-patterns`
 **Role:** Admin, User
@@ -919,7 +1137,7 @@ GET /lessons/1/grammar-patterns
 
 ---
 
-### 16. Add Grammar Patterns to Lesson
+### 22. Add Grammar Patterns to Lesson
 
 **Endpoint:** `POST /lessons/:id/grammar-patterns`
 **Role:** Admin only
@@ -964,7 +1182,7 @@ GET /lessons/1/grammar-patterns
 
 ---
 
-### 17. Remove Grammar Patterns from Lesson
+### 23. Remove Grammar Patterns from Lesson
 
 **Endpoint:** `DELETE /lessons/:id/grammar-patterns`
 **Role:** Admin only

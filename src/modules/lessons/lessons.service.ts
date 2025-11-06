@@ -71,22 +71,34 @@ export class LessonsService {
     const savedLesson = await this.lessonsRepository.save(lesson);
 
     if (words && words.length > 0) {
-      const lessonWords = words.map((word) =>
-        this.lessonWordRepository.create({
+      // Auto-increment orderIndex for words if not provided
+      let nextWordOrderIndex = 0;
+      const lessonWords = words.map((word) => {
+        const orderIndex =
+          word.orderIndex !== undefined ? word.orderIndex : nextWordOrderIndex++;
+        return this.lessonWordRepository.create({
           ...word,
           lessonId: savedLesson.id,
-        }),
-      );
+          orderIndex,
+        });
+      });
       await this.lessonWordRepository.save(lessonWords);
     }
 
     if (grammarPatterns && grammarPatterns.length > 0) {
-      const lessonGrammarPatterns = grammarPatterns.map((pattern) =>
-        this.lessonGrammarPatternRepository.create({
+      // Auto-increment orderIndex for grammar patterns if not provided
+      let nextGrammarOrderIndex = 0;
+      const lessonGrammarPatterns = grammarPatterns.map((pattern) => {
+        const orderIndex =
+          pattern.orderIndex !== undefined
+            ? pattern.orderIndex
+            : nextGrammarOrderIndex++;
+        return this.lessonGrammarPatternRepository.create({
           ...pattern,
           lessonId: savedLesson.id,
-        }),
-      );
+          orderIndex,
+        });
+      });
       await this.lessonGrammarPatternRepository.save(lessonGrammarPatterns);
     }
 
@@ -257,12 +269,19 @@ export class LessonsService {
             );
           }
 
-          const lessonWords = words.map((word) =>
-            manager.create(LessonWord, {
+          // Auto-increment orderIndex for words if not provided
+          let nextWordOrderIndex = 0;
+          const lessonWords = words.map((word) => {
+            const orderIndex =
+              word.orderIndex !== undefined
+                ? word.orderIndex
+                : nextWordOrderIndex++;
+            return manager.create(LessonWord, {
               ...word,
               lessonId: id,
-            }),
-          );
+              orderIndex,
+            });
+          });
           await manager.save(lessonWords);
         }
       }
@@ -298,12 +317,19 @@ export class LessonsService {
             );
           }
 
-          const lessonGrammarPatterns = grammarPatterns.map((pattern) =>
-            manager.create(LessonGrammarPattern, {
+          // Auto-increment orderIndex for grammar patterns if not provided
+          let nextGrammarOrderIndex = 0;
+          const lessonGrammarPatterns = grammarPatterns.map((pattern) => {
+            const orderIndex =
+              pattern.orderIndex !== undefined
+                ? pattern.orderIndex
+                : nextGrammarOrderIndex++;
+            return manager.create(LessonGrammarPattern, {
               ...pattern,
               lessonId: id,
-            }),
-          );
+              orderIndex,
+            });
+          });
           await manager.save(lessonGrammarPatterns);
         }
       }
@@ -440,12 +466,27 @@ export class LessonsService {
       }
     }
 
-    const lessonWords = words.map((word) =>
-      this.lessonWordRepository.create({
+    // Get max orderIndex for auto-increment
+    const maxOrderResult: { maxOrder: number | null } | undefined =
+      await this.lessonWordRepository
+        .createQueryBuilder('lessonWord')
+        .select('MAX(lessonWord.orderIndex)', 'maxOrder')
+        .where('lessonWord.lessonId = :lessonId', { lessonId })
+        .getRawOne();
+
+    let nextOrderIndex = (maxOrderResult?.maxOrder || -1) + 1;
+
+    // Map words with auto-incremented orderIndex if not provided
+    const lessonWords = words.map((word) => {
+      const orderIndex =
+        word.orderIndex !== undefined ? word.orderIndex : nextOrderIndex++;
+      return this.lessonWordRepository.create({
         ...word,
         lessonId,
-      }),
-    );
+        orderIndex,
+      });
+    });
+
     return this.lessonWordRepository.save(lessonWords);
   }
 
@@ -543,12 +584,29 @@ export class LessonsService {
       }
     }
 
-    const lessonGrammarPatterns = patterns.map((pattern) =>
-      this.lessonGrammarPatternRepository.create({
+    // Get max orderIndex for auto-increment
+    const maxOrderResult: { maxOrder: number | null } | undefined =
+      await this.lessonGrammarPatternRepository
+        .createQueryBuilder('lessonGrammarPattern')
+        .select('MAX(lessonGrammarPattern.orderIndex)', 'maxOrder')
+        .where('lessonGrammarPattern.lessonId = :lessonId', { lessonId })
+        .getRawOne();
+
+    let nextOrderIndex = (maxOrderResult?.maxOrder || -1) + 1;
+
+    // Map patterns with auto-incremented orderIndex if not provided
+    const lessonGrammarPatterns = patterns.map((pattern) => {
+      const orderIndex =
+        pattern.orderIndex !== undefined
+          ? pattern.orderIndex
+          : nextOrderIndex++;
+      return this.lessonGrammarPatternRepository.create({
         ...pattern,
         lessonId,
-      }),
-    );
+        orderIndex,
+      });
+    });
+
     return this.lessonGrammarPatternRepository.save(lessonGrammarPatterns);
   }
 

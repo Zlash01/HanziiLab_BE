@@ -23,14 +23,6 @@ export class LessonGrammarPattern {
   grammarPatternId: number;
 
   @Column({
-    name: 'is_primary',
-    type: 'boolean',
-    default: false,
-    comment: 'True if this is a focus grammar pattern for the lesson',
-  })
-  isPrimary: boolean;
-
-  @Column({
     name: 'order_index',
     type: 'int',
     nullable: false,

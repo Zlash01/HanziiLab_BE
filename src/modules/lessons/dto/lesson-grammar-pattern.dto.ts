@@ -1,6 +1,5 @@
 import {
   IsInt,
-  IsBoolean,
   IsOptional,
   Min,
 } from 'class-validator';
@@ -11,19 +10,12 @@ export class CreateLessonGrammarPatternDto {
   grammarPatternId: number;
 
   @IsOptional()
-  @IsBoolean()
-  isPrimary?: boolean = false;
-
   @IsInt()
   @Min(0)
-  orderIndex: number;
+  orderIndex?: number;
 }
 
 export class UpdateLessonGrammarPatternDto {
-  @IsOptional()
-  @IsBoolean()
-  isPrimary?: boolean;
-
   @IsOptional()
   @IsInt()
   @Min(0)

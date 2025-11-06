@@ -23,14 +23,6 @@ export class LessonWord {
   wordSenseId: number;
 
   @Column({
-    name: 'is_primary',
-    type: 'boolean',
-    default: false,
-    comment: 'True if this is a focus word for the lesson',
-  })
-  isPrimary: boolean;
-
-  @Column({
     name: 'order_index',
     type: 'int',
     nullable: false,
