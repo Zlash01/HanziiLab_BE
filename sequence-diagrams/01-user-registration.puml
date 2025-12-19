@@ -1,0 +1,50 @@
+@startuml User_Registration
+
+title User Registration Flow
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Client
+participant "AuthController" as AC
+participant "AuthService" as AS
+participant "UsersService" as US
+database "Database" as DB
+
+Client -> AC: POST /auth/signup\n(RegisterDto: email, password, displayName)
+activate AC
+
+AC -> AS: signUp(registerDto)
+activate AS
+
+AS -> US: findByEmail(email)
+activate US
+US -> DB: SELECT * FROM users WHERE email = ?
+DB --> US: User | null
+US --> AS: existingUser | null
+deactivate US
+
+alt User already exists
+    AS --> AC: ConflictException\n"Email already registered"
+    AC --> Client: 409 Conflict
+else User does not exist
+    AS -> AS: bcrypt.genSalt()
+    AS -> AS: bcrypt.hash(password, salt)
+    
+    AS -> US: create(registerDto, passwordHash)
+    activate US
+    US -> DB: INSERT INTO users\n(email, passwordHash, displayName, role, ...)
+    DB --> US: saved User
+    US --> AS: User
+    deactivate US
+    
+    AS --> AC: User (without passwordHash)
+    deactivate AS
+    
+    AC -> AC: ClassSerializerInterceptor\n(@Exclude passwordHash)
+    AC --> Client: 201 Created\n{ id, email, displayName, role, isActive, createdAt }
+end
+
+deactivate AC
+
+@enduml

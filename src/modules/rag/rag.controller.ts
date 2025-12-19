@@ -47,9 +47,9 @@ export class RagController {
   @Post('query')
   @HttpCode(HttpStatus.OK)
   @Roles(Role.User, Role.Admin)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Ask a question using RAG',
-    description: 'Process a user question using Retrieval-Augmented Generation with Chinese language learning content'
+    description: 'Process a user question using Retrieval-Augmented Generation with Chinese language learning content. The system automatically optimizes search parameters based on the context type (word/grammar/lesson) and HSK level. Simply provide your question - the backend handles the rest.'
   })
   @ApiBody({ type: RagQueryDto })
   @ApiResponse({

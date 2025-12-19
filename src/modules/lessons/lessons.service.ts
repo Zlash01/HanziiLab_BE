@@ -20,6 +20,7 @@ import {
   CreateLessonItemDto,
   LessonItemType,
 } from './dto/create-lesson-item.dto';
+import { UpdateLessonItemDto } from './dto/update-lesson-item.dto';
 import { ContentService } from './content.service';
 import { QuestionsService } from './questions.service';
 
@@ -682,6 +683,58 @@ export class LessonsService {
         ...commonData,
         questionType: questionType,
       });
+    } else {
+      throw new BadRequestException(
+        'Invalid itemType. Must be "content" or "question"',
+      );
+    }
+  }
+
+  async updateLessonItem(
+    id: number,
+    updateLessonItemDto: UpdateLessonItemDto,
+  ): Promise<any> {
+    console.log('[updateLessonItem] Called with id:', id);
+    console.log('[updateLessonItem] DTO:', JSON.stringify(updateLessonItemDto, null, 2));
+    
+    const { itemType, contentType, questionType, data, ...commonData } =
+      updateLessonItemDto;
+
+    if (itemType === LessonItemType.CONTENT) {
+      // Build the update object for content
+      const updateData: any = {};
+      if (data !== undefined) {
+        updateData.data = data;
+      }
+      if (commonData.lessonId !== undefined) {
+        updateData.lessonId = commonData.lessonId;
+      }
+      if (commonData.orderIndex !== undefined) {
+        updateData.orderIndex = commonData.orderIndex;
+      }
+      if (contentType !== undefined) {
+        updateData.type = contentType;
+      }
+
+      console.log('[updateLessonItem] Calling contentService.update with:', JSON.stringify(updateData, null, 2));
+      return this.contentService.update(id, updateData);
+    } else if (itemType === LessonItemType.QUESTION) {
+      // Build the update object for question
+      const updateData: any = {};
+      if (data !== undefined) {
+        updateData.data = data;
+      }
+      if (commonData.lessonId !== undefined) {
+        updateData.lessonId = commonData.lessonId;
+      }
+      if (commonData.orderIndex !== undefined) {
+        updateData.orderIndex = commonData.orderIndex;
+      }
+      if (questionType !== undefined) {
+        updateData.questionType = questionType;
+      }
+
+      return this.questionsService.update(id, updateData);
     } else {
       throw new BadRequestException(
         'Invalid itemType. Must be "content" or "question"',

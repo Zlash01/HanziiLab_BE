@@ -22,6 +22,7 @@ import { GetLessonsQueryDto } from './dto/get-lessons-query.dto';
 import { CreateLessonWordDto } from './dto/lesson-word.dto';
 import { CreateLessonGrammarPatternDto } from './dto/lesson-grammar-pattern.dto';
 import { CreateLessonItemDto } from './dto/create-lesson-item.dto';
+import { UpdateLessonItemDto } from './dto/update-lesson-item.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/role.enum';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
@@ -300,5 +301,21 @@ export class LessonsController {
   @Roles(Role.Admin)
   async createLessonItem(@Body() createLessonItemDto: CreateLessonItemDto): Promise<any> {
     return this.lessonsService.createLessonItem(createLessonItemDto);
+  }
+
+  @ApiOperation({ summary: 'Update lesson content or question (unified endpoint) (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Lesson item updated successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid item type or missing required fields' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 404, description: 'Content or Question not found' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Content or Question ID' })
+  @ApiBody({ type: UpdateLessonItemDto })
+  @Put('items/:id')
+  @Roles(Role.Admin)
+  async updateLessonItem(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateLessonItemDto: UpdateLessonItemDto,
+  ): Promise<any> {
+    return this.lessonsService.updateLessonItem(id, updateLessonItemDto);
   }
 }

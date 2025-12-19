@@ -1,0 +1,158 @@
+@startuml Lesson_CRUD
+
+title Lesson CRUD Operations with Words and Grammar Patterns
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor "Admin Client" as Client
+participant "LessonsController" as LC
+participant "LessonsService" as LS
+participant "ContentService" as CS
+participant "QuestionsService" as QS
+database "Database" as DB
+
+== Create Lesson with Words and Grammar ==
+Client -> LC: POST /lessons\n{ name, courseId, words?: [], grammarPatterns?: [] }
+activate LC
+
+LC -> LS: createLesson(createLessonDto)
+activate LS
+
+alt orderIndex not provided
+    LS -> DB: SELECT MAX(orderIndex) FROM lessons WHERE courseId = ?
+    DB --> LS: maxOrder
+    LS -> LS: orderIndex = maxOrder + 1
+end
+
+LS -> DB: INSERT INTO lessons (name, description, courseId, orderIndex)
+DB --> LS: savedLesson
+
+opt words provided
+    loop For each word
+        LS -> LS: Auto-assign orderIndex if not provided
+        LS -> DB: INSERT INTO lesson_words\n(lessonId, wordSenseId, orderIndex)
+    end
+end
+
+opt grammarPatterns provided
+    loop For each grammar pattern
+        LS -> LS: Auto-assign orderIndex if not provided
+        LS -> DB: INSERT INTO lesson_grammar_patterns\n(lessonId, grammarPatternId, orderIndex)
+    end
+end
+
+LS -> LS: findOne(savedLesson.id) with relations
+
+LS --> LC: Lesson with words and grammar
+deactivate LS
+LC --> Client: 201 Created\n{ lesson with relations }
+deactivate LC
+
+== Get Complete Lesson (Content + Questions) ==
+Client -> LC: GET /lessons/content/:id
+activate LC
+
+LC -> LS: findCompleteLesson(id)
+activate LS
+
+LS -> DB: SELECT lesson with course, words, grammar relations
+DB --> LS: lesson
+
+LS -> CS: findByLessonId(id)
+activate CS
+CS -> DB: SELECT * FROM contents WHERE lessonId = ? ORDER BY orderIndex
+DB --> CS: contents[]
+CS --> LS: contents[]
+deactivate CS
+
+LS -> QS: findByLessonId(id)
+activate QS
+QS -> DB: SELECT * FROM questions WHERE lessonId = ? ORDER BY orderIndex
+DB --> QS: questions[]
+QS --> LS: questions[]
+deactivate QS
+
+LS -> LS: Combine and sort by orderIndex
+note right of LS
+    Content and questions are merged
+    and sorted by orderIndex to
+    create the lesson flow
+end note
+
+LS --> LC: CompleteLesson\n{ lesson, items: [...] }
+deactivate LS
+
+LC --> Client: 200 OK\n{ id, name, course, items: [...] }
+deactivate LC
+
+== Add Words to Lesson ==
+Client -> LC: POST /lessons/:id/words\n[{ wordSenseId, orderIndex? }, ...]
+activate LC
+
+LC -> LS: addWordsToLesson(id, words)
+activate LS
+
+LS -> DB: SELECT * FROM lessons WHERE id = ?
+DB --> LS: lesson | null
+
+alt Lesson not found
+    LS --> LC: NotFoundException
+    LC --> Client: 404 Not Found
+else Lesson exists
+    LS -> DB: SELECT id FROM word_senses WHERE id IN (...)
+    DB --> LS: existingWordSenses[]
+    
+    alt Some word senses not found
+        LS --> LC: BadRequestException\n"Invalid word sense IDs"
+        LC --> Client: 400 Bad Request
+    else All valid
+        LS -> DB: Check for duplicates in lesson_words
+        
+        loop For each new word
+            LS -> DB: INSERT INTO lesson_words
+        end
+        
+        LS --> LC: addedWords[]
+        deactivate LS
+        LC --> Client: 201 Created\n{ message, words: [...] }
+    end
+end
+deactivate LC
+
+== Add Grammar Patterns to Lesson ==
+Client -> LC: POST /lessons/:id/grammar-patterns\n[{ grammarPatternId, orderIndex? }, ...]
+activate LC
+
+LC -> LS: addGrammarPatternsToLesson(id, patterns)
+activate LS
+
+LS -> DB: Validate lesson exists
+LS -> DB: Validate grammar pattern IDs exist
+LS -> DB: Check for duplicates
+
+loop For each new pattern
+    LS -> DB: INSERT INTO lesson_grammar_patterns
+end
+
+LS --> LC: addedPatterns[]
+deactivate LS
+LC --> Client: 201 Created\n{ message, patterns: [...] }
+deactivate LC
+
+== Soft Delete Lesson ==
+Client -> LC: DELETE /lessons/:id/soft
+activate LC
+
+LC -> LS: softDelete(id)
+activate LS
+
+LS -> DB: UPDATE lessons SET isActive = false WHERE id = ?
+DB --> LS: updated lesson
+
+LS --> LC: lesson
+deactivate LS
+LC --> Client: 200 OK\n{ message, lesson }
+deactivate LC
+
+@enduml

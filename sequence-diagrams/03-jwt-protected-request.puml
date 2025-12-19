@@ -1,0 +1,56 @@
+@startuml JWT_Protected_Request
+
+title JWT Protected Request Flow
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Client
+participant "Controller" as C
+participant "JWTGuard" as JG
+participant "JwtStrategy" as JS
+participant "RolesGuard" as RG
+database "Database" as DB
+
+Client -> C: GET /protected-endpoint\nAuthorization: Bearer <token>
+activate C
+
+C -> JG: Guard check
+activate JG
+
+JG -> JS: validate(token)
+activate JS
+
+alt Token is invalid or expired
+    JS --> JG: UnauthorizedException
+    JG --> C: 401 Unauthorized
+    C --> Client: 401 Unauthorized\n"Invalid token"
+else Token is valid
+    JS -> JS: Decode JWT payload\n{ id, email, role }
+    JS --> JG: payload (stored in req.user)
+    deactivate JS
+    
+    JG --> C: Guard passes
+    deactivate JG
+    
+    C -> RG: Role check
+    activate RG
+    
+    RG -> RG: Get required roles from @Roles decorator
+    RG -> RG: Check user.role in required roles
+    
+    alt User role not authorized
+        RG --> C: ForbiddenException
+        C --> Client: 403 Forbidden\n"Access denied"
+    else User role authorized
+        RG --> C: Guard passes
+        deactivate RG
+        
+        C -> C: Execute controller method
+        C --> Client: 200 OK\nResponse data
+    end
+end
+
+deactivate C
+
+@enduml

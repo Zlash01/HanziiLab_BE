@@ -37,9 +37,14 @@ export class QuestionsService {
     });
   }
 
-  async findOne(id: number): Promise<Question> {
+  async findOne(id: number, includeInactive: boolean = false): Promise<Question> {
+    const whereClause: { id: number; isActive?: boolean } = { id };
+    if (!includeInactive) {
+      whereClause.isActive = true;
+    }
+    
     const question = await this.questionRepository.findOne({
-      where: { id, isActive: true },
+      where: whereClause,
     });
     
     if (!question) {
@@ -50,13 +55,13 @@ export class QuestionsService {
   }
 
   async update(id: number, updateQuestionDto: UpdateQuestionDto): Promise<Question> {
-    const question = await this.findOne(id);
+    const question = await this.findOne(id, true); // Include inactive for updates
     Object.assign(question, updateQuestionDto);
     return await this.questionRepository.save(question);
   }
 
   async remove(id: number): Promise<void> {
-    const question = await this.findOne(id);
+    const question = await this.findOne(id, true); // Include inactive for soft delete
     question.isActive = false;
     await this.questionRepository.save(question);
   }
@@ -66,5 +71,18 @@ export class QuestionsService {
     if (result.affected === 0) {
       throw new NotFoundException(`Question with ID ${id} not found`);
     }
+  }
+
+  async restore(id: number): Promise<Question> {
+    const question = await this.questionRepository.findOne({
+      where: { id },
+    });
+
+    if (!question) {
+      throw new NotFoundException(`Question with ID ${id} not found`);
+    }
+
+    question.isActive = true;
+    return this.questionRepository.save(question);
   }
 }

@@ -1,0 +1,357 @@
+@startuml HanziiLab_BE_Class_Diagram
+
+title HanziiLab Backend - Class Diagram
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam groupInheritance 2
+
+' ==========================================
+' ENUMS
+' ==========================================
+
+enum Role {
+  User = "user"
+  Admin = "admin"
+}
+
+enum HskLevel {
+  HSK1 = 1
+  HSK2 = 2
+  HSK3 = 3
+  HSK4 = 4
+  HSK5 = 5
+  HSK6 = 6
+  HSK7 = 7
+  HSK8 = 8
+  HSK9 = 9
+}
+
+enum LessonProgressStatus {
+  NOT_STARTED = "not_started"
+  COMPLETED = "completed"
+}
+
+enum QuestionType {
+  SELECTION_TEXT_TEXT
+  SELECTION_TEXT_IMAGE
+  SELECTION_AUDIO_TEXT
+  SELECTION_AUDIO_IMAGE
+  SELECTION_IMAGE_TEXT
+  MATCHING_TEXT_TEXT
+  MATCHING_TEXT_IMAGE
+  MATCHING_AUDIO_TEXT
+  MATCHING_AUDIO_IMAGE
+  FILL_TEXT_TEXT
+  BOOL_AUDIO_TEXT
+}
+
+enum ContentType {
+  WORD_DEFINITION
+  SENTENCES
+}
+
+enum SourceType {
+  WORD = "word"
+  GRAMMAR = "grammar"
+  CONTENT = "content"
+  QUESTION = "question"
+}
+
+' ==========================================
+' USERS MODULE
+' ==========================================
+
+package "Users Module" #LightBlue {
+  class User {
+    +id: number
+    +role: Role
+    +email: string
+    +passwordHash: string
+    +displayName: string
+    +currentHskLevel: number
+    +nativeLanguage: string
+    +totalStudyDays: number
+    +currentStreak: number
+    +longestStreak: number
+    +lastStudyDate: Date
+    +isActive: boolean
+    +createdAt: Date
+    +updatedAt: Date
+    --
+    +lessonProgress: UserLessonProgress[]
+  }
+
+  class UserLessonProgress {
+    +id: number
+    +userId: number
+    +lessonId: number
+    +status: LessonProgressStatus
+    +scorePercentage: number
+    +completedAt: Date
+    +createdAt: Date
+    +updatedAt: Date
+    --
+    +user: User
+    +lesson: Lessons
+  }
+}
+
+' ==========================================
+' COURSES MODULE
+' ==========================================
+
+package "Courses Module" #LightGreen {
+  class Courses {
+    +id: number
+    +hskLevel: HskLevel
+    +title: string
+    +description: string
+    +prerequisiteCourseId: number
+    +isActive: boolean
+    +orderIndex: number
+    +createdAt: Date
+    --
+    +prerequisiteCourse: Courses
+    +lessons: Lessons[]
+  }
+}
+
+' ==========================================
+' LESSONS MODULE
+' ==========================================
+
+package "Lessons Module" #LightYellow {
+  class Lessons {
+    +id: number
+    +name: string
+    +description: string
+    +isActive: boolean
+    +orderIndex: number
+    +courseId: number
+    --
+    +course: Courses
+    +lessonWords: LessonWord[]
+    +lessonGrammarPatterns: LessonGrammarPattern[]
+    +userProgress: UserLessonProgress[]
+  }
+
+  class Question {
+    +id: number
+    +lessonId: number
+    +orderIndex: number
+    +questionType: QuestionType
+    +data: JSON
+    +isActive: boolean
+    --
+    +lesson: Lessons
+  }
+
+  class Content {
+    +id: number
+    +lessonId: number
+    +orderIndex: number
+    +type: ContentType
+    +data: JSON
+    +isActive: boolean
+    --
+    +lesson: Lessons
+  }
+
+  class LessonWord {
+    +id: number
+    +lessonId: number
+    +wordSenseId: number
+    +orderIndex: number
+    --
+    +lesson: Lessons
+    +wordSense: WordSense
+  }
+
+  class LessonGrammarPattern {
+    +id: number
+    +lessonId: number
+    +grammarPatternId: number
+    +orderIndex: number
+    --
+    +lesson: Lessons
+    +grammarPattern: GrammarPattern
+  }
+}
+
+' ==========================================
+' WORDS MODULE
+' ==========================================
+
+package "Words Module" #LightCoral {
+  class Word {
+    +id: number
+    +simplified: string
+    +traditional: string
+    +createdAt: Date
+    --
+    +senses: WordSense[]
+  }
+
+  class WordSense {
+    +id: number
+    +wordId: number
+    +senseNumber: number
+    +pinyin: string
+    +partOfSpeech: string
+    +hskLevel: number
+    +isPrimary: boolean
+    +imageUrl: string
+    +audioUrl: string
+    --
+    +word: Word
+    +translations: WordSenseTranslation[]
+  }
+
+  class WordSenseTranslation {
+    +id: number
+    +wordSenseId: number
+    +language: string
+    +translation: string
+    +additionalDetail: string
+    --
+    +wordSense: WordSense
+  }
+}
+
+' ==========================================
+' GRAMMAR MODULE
+' ==========================================
+
+package "Grammar Module" #LightPink {
+  class GrammarPattern {
+    +id: number
+    +pattern: string[]
+    +patternPinyin: string[]
+    +patternFormula: string
+    +hskLevel: number
+    +createdAt: Date
+    --
+    +translations: GrammarTranslation[]
+  }
+
+  class GrammarTranslation {
+    +id: number
+    +grammarPatternId: number
+    +language: string
+    +grammarPoint: string
+    +explanation: string
+    +example: JSON
+    --
+    +grammarPattern: GrammarPattern
+  }
+}
+
+' ==========================================
+' SRS MODULE (Spaced Repetition System)
+' ==========================================
+
+package "SRS Module" #LightCyan {
+  class UserQuestionReview {
+    +id: number
+    +userId: number
+    +questionId: number
+    +lessonId: number
+    +easeFactor: number
+    +interval: number
+    +repetitions: number
+    +nextReviewDate: Date
+    +lastReviewedAt: Date
+    +createdAt: Date
+    +updatedAt: Date
+    --
+    +user: User
+    +question: Question
+    +lesson: Lessons
+  }
+}
+
+' ==========================================
+' RAG MODULE (Retrieval Augmented Generation)
+' ==========================================
+
+package "RAG Module" #Lavender {
+  class RagContext {
+    +id: number
+    +userId: number
+    +query: string
+    +response: string
+    +retrievedSources: JSON[]
+    +processingTimeMs: number
+    +createdAt: Date
+    --
+    +user: User
+  }
+
+  class Embedding {
+    +id: number
+    +sourceType: SourceType
+    +sourceId: number
+    +contentText: string
+    +embedding: number[]
+    +metadata: JSON
+    +isActive: boolean
+    +createdAt: Date
+    +updatedAt: Date
+  }
+}
+
+' ==========================================
+' RELATIONSHIPS
+' ==========================================
+
+' Users Module Relations
+User "1" --> "*" UserLessonProgress : has
+User ..> Role : uses
+
+' Courses Module Relations
+Courses "1" --> "*" Lessons : contains
+Courses "0..1" --> "0..1" Courses : prerequisite
+Courses ..> HskLevel : uses
+
+' Lessons Module Relations
+Lessons "*" --> "1" Courses : belongs to
+Lessons "1" --> "*" Question : has
+Lessons "1" --> "*" Content : has
+Lessons "1" --> "*" LessonWord : has
+Lessons "1" --> "*" LessonGrammarPattern : has
+Lessons "1" --> "*" UserLessonProgress : tracked by
+
+Question ..> QuestionType : uses
+Content ..> ContentType : uses
+
+' Words Module Relations
+Word "1" --> "*" WordSense : has
+WordSense "1" --> "*" WordSenseTranslation : has
+
+' Grammar Module Relations
+GrammarPattern "1" --> "*" GrammarTranslation : has
+
+' Lesson-Word Junction
+LessonWord "*" --> "1" Lessons : belongs to
+LessonWord "*" --> "1" WordSense : references
+
+' Lesson-Grammar Junction
+LessonGrammarPattern "*" --> "1" Lessons : belongs to
+LessonGrammarPattern "*" --> "1" GrammarPattern : references
+
+' SRS Module Relations
+UserQuestionReview "*" --> "1" User : belongs to
+UserQuestionReview "*" --> "1" Question : reviews
+UserQuestionReview "*" --> "1" Lessons : belongs to
+
+' RAG Module Relations
+RagContext "*" --> "0..1" User : belongs to
+Embedding ..> SourceType : uses
+
+' User Progress Relations
+UserLessonProgress "*" --> "1" User : belongs to
+UserLessonProgress "*" --> "1" Lessons : tracks
+UserLessonProgress ..> LessonProgressStatus : uses
+
+@enduml

@@ -1,0 +1,130 @@
+@startuml User_Progress_Tracking
+
+title User Progress and Study Streak Tracking
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Client
+participant "UsersController" as UC
+participant "UserProgressService" as UPS
+database "Database" as DB
+
+== Get Course Progress ==
+Client -> UC: GET /users/progress/course/:courseId
+activate UC
+
+UC -> UPS: getCourseProgress(userId, courseId)
+activate UPS
+
+UPS -> DB: SELECT * FROM lessons\nWHERE courseId = ? AND isActive = true\nORDER BY orderIndex
+DB --> UPS: lessons[]
+
+UPS -> DB: SELECT * FROM user_lesson_progress\nWHERE userId = ? AND lessonId IN (...)
+DB --> UPS: progressRecords[]
+
+UPS -> UPS: Map progress to lessons
+note right of UPS
+    Creates map: lessonId -> progress
+    For lessons without progress,
+    status = NOT_STARTED
+end note
+
+loop For each lesson
+    UPS -> UPS: Build progress response
+    note right
+        {
+          lessonId,
+          name,
+          status: COMPLETED | NOT_STARTED,
+          scorePercentage,
+          completedAt
+        }
+    end note
+end
+
+UPS --> UC: CourseProgress[]
+deactivate UPS
+UC --> Client: 200 OK\n[{ lessonId, name, status, score, completedAt }, ...]
+deactivate UC
+
+== Get Lesson Progress ==
+Client -> UC: GET /users/progress/lesson/:lessonId
+activate UC
+
+UC -> UPS: getLessonProgress(userId, lessonId)
+activate UPS
+
+UPS -> DB: SELECT * FROM user_lesson_progress\nWHERE userId = ? AND lessonId = ?\nJOIN lessons
+DB --> UPS: progress | null
+
+UPS --> UC: UserLessonProgress | null
+deactivate UPS
+UC --> Client: 200 OK\n{ status, scorePercentage, completedAt, lesson }
+deactivate UC
+
+== Get Study Info (Streak) ==
+Client -> UC: GET /users/progress/study-info
+activate UC
+
+UC -> UPS: getStudyInfo(userId)
+activate UPS
+
+UPS -> DB: SELECT currentStreak, longestStreak, totalStudyDays, lastStudyDate\nFROM users WHERE id = ?
+DB --> UPS: user
+
+alt User not found
+    UPS --> UC: NotFoundException
+    UC --> Client: 404 Not Found
+else User found
+    UPS --> UC: StudyInfo
+    deactivate UPS
+    UC --> Client: 200 OK\n{\n  currentStreak: 5,\n  longestStreak: 14,\n  totalStudyDays: 30,\n  lastStudyDate: "2025-12-03"\n}
+end
+deactivate UC
+
+== Complete Lesson (Updates Streak) ==
+Client -> UC: POST /users/progress/lesson/:lessonId/complete\n{ scorePercentage: 85.5 }
+activate UC
+
+UC -> UPS: completeLesson(userId, lessonId, scorePercentage)
+activate UPS
+
+== Streak Update Logic (Internal) ==
+UPS -> UPS: updateStudyStreak(userId, currentDate)
+
+UPS -> DB: SELECT * FROM users WHERE id = ?
+DB --> UPS: user
+
+alt First study session (no lastStudyDate)
+    UPS -> UPS: currentStreak = 1\nlongestStreak = 1\ntotalStudyDays = 1
+else Same day as last study
+    UPS -> UPS: No changes to streak
+    note right: Already studied today
+else Next consecutive day
+    UPS -> UPS: currentStreak++\ntotalStudyDays++
+    note right
+        daysDifference = 1
+        Maintain streak
+    end note
+else More than 1 day gap
+    UPS -> UPS: currentStreak = 1\ntotalStudyDays++
+    note right
+        daysDifference > 1
+        Reset streak
+    end note
+end
+
+alt currentStreak > longestStreak
+    UPS -> UPS: longestStreak = currentStreak
+end
+
+UPS -> DB: UPDATE users\nSET currentStreak, longestStreak, totalStudyDays, lastStudyDate
+DB --> UPS: updated
+
+UPS --> UC: UserLessonProgress
+deactivate UPS
+UC --> Client: 200 OK\n{ progress with updated streak info }
+deactivate UC
+
+@enduml

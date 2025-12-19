@@ -1,0 +1,66 @@
+@startuml User_Login
+
+title User Login and JWT Authentication Flow
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Client
+participant "AuthController" as AC
+participant "LocalGuard" as LG
+participant "LocalStrategy" as LS
+participant "AuthService" as AS
+participant "UsersService" as US
+participant "JwtService" as JWT
+database "Database" as DB
+
+Client -> AC: POST /auth/login\n{ email, password }
+activate AC
+
+AC -> LG: Guard check
+activate LG
+
+LG -> LS: validate(email, password)
+activate LS
+
+LS -> AS: validateUser(email, password)
+activate AS
+
+AS -> US: findByEmail(email)
+activate US
+US -> DB: SELECT * FROM users WHERE email = ?
+DB --> US: User | null
+US --> AS: User | null
+deactivate US
+
+alt User not found OR password mismatch
+    AS -> AS: bcrypt.compare(password, user.passwordHash)
+    AS --> LS: null
+    LS --> LG: UnauthorizedException
+    LG --> AC: 401 Unauthorized
+    AC --> Client: 401 Unauthorized\n"Invalid credentials"
+else Valid credentials
+    AS -> AS: bcrypt.compare(password, user.passwordHash)
+    note right: password matches
+    
+    AS -> AS: Create JWT payload\n{ id, email, role }
+    AS -> JWT: sign(payload)
+    activate JWT
+    JWT --> AS: JWT token string
+    deactivate JWT
+    
+    AS --> LS: JWT token
+    deactivate AS
+    
+    LS --> LG: JWT token (stored in req.user)
+    deactivate LS
+    
+    LG --> AC: Guard passes
+    deactivate LG
+    
+    AC --> Client: 200 OK\n{ access_token: "eyJhbG..." }
+end
+
+deactivate AC
+
+@enduml

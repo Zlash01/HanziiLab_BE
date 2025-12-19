@@ -182,13 +182,18 @@ export class SrsService {
       );
     }
 
+    // ADD: Convert string to number (TypeORM returns DECIMAL as string)
+    const currentEaseFactor = Number(review.easeFactor);
+    const currentInterval = Number(review.interval);
+    const currentRepetitions = Number(review.repetitions);
+
     // Calculate new SM-2 parameters
     const { newEaseFactor, newInterval, newRepetitions } =
       this.calculateNextReview(
         quality,
-        review.easeFactor,
-        review.interval,
-        review.repetitions,
+        currentEaseFactor,
+        currentInterval,
+        currentRepetitions,
       );
 
     // Calculate next review date

@@ -109,76 +109,109 @@ export class AdminProgressService {
       averageScore: number;
     }>;
   }> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('User not found');
+    console.log('[getUserProgressDetails] Starting for userId:', userId);
+    
+    try {
+      console.log('[getUserProgressDetails] Step 1: Finding user...');
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        console.log('[getUserProgressDetails] User not found:', userId);
+        throw new NotFoundException('User not found');
+      }
+      console.log('[getUserProgressDetails] User found:', user.id, user.email);
+
+      // Get all completed lessons with details
+      console.log('[getUserProgressDetails] Step 2: Getting completed lessons...');
+      const completedLessons = await this.userLessonProgressRepository
+        .createQueryBuilder('progress')
+        .innerJoinAndSelect('progress.lesson', 'lesson')
+        .innerJoinAndSelect('lesson.course', 'course')
+        .where('progress.userId = :userId', { userId })
+        .andWhere('progress.status = :status', { status: LessonProgressStatus.COMPLETED })
+        .orderBy('progress.completedAt', 'DESC')
+        .getMany();
+      console.log('[getUserProgressDetails] Completed lessons count:', completedLessons.length);
+
+      console.log('[getUserProgressDetails] Step 3: Mapping completed lessons data...');
+      const completedLessonsData = completedLessons.map(p => ({
+        lessonId: p.lessonId,
+        lessonTitle: p.lesson.name,
+        courseId: p.lesson.courseId,
+        courseTitle: p.lesson.course.title,
+        scorePercentage: p.scorePercentage || 0,
+        completedAt: p.completedAt!,
+      }));
+      console.log('[getUserProgressDetails] Mapped lessons data count:', completedLessonsData.length);
+
+      // Get course breakdown
+      console.log('[getUserProgressDetails] Step 4: Getting active courses...');
+      const courses = await this.coursesRepository.find({ where: { isActive: true } });
+      console.log('[getUserProgressDetails] Active courses count:', courses.length);
+      
+      console.log('[getUserProgressDetails] Step 5: Building course breakdown...');
+      const courseBreakdown = await Promise.all(
+        courses.map(async (course) => {
+          console.log('[getUserProgressDetails] Processing course:', course.id, course.title);
+          const lessons = await this.lessonsRepository.find({
+            where: { courseId: course.id, isActive: true },
+          });
+          const lessonIds = lessons.map(l => l.id);
+          console.log('[getUserProgressDetails] Course', course.id, 'has', lessonIds.length, 'lessons');
+
+          // Skip query if no lessons in course to avoid empty IN () SQL error
+          let completed: UserLessonProgress[] = [];
+          if (lessonIds.length > 0) {
+            console.log('[getUserProgressDetails] Querying progress for course', course.id);
+            completed = await this.userLessonProgressRepository
+              .createQueryBuilder('progress')
+              .where('progress.userId = :userId', { userId })
+              .andWhere('progress.lessonId IN (:...lessonIds)', { lessonIds })
+              .andWhere('progress.status = :status', { status: LessonProgressStatus.COMPLETED })
+              .getMany();
+            console.log('[getUserProgressDetails] Course', course.id, 'completed lessons:', completed.length);
+          } else {
+            console.log('[getUserProgressDetails] Course', course.id, 'has no lessons, skipping query');
+          }
+
+          const avgScore = completed.length > 0
+            ? completed.reduce((sum, p) => sum + (p.scorePercentage || 0), 0) / completed.length
+            : 0;
+
+          return {
+            courseId: course.id,
+            courseTitle: course.title,
+            totalLessons: lessons.length,
+            completedLessons: completed.length,
+            averageScore: Math.round(avgScore * 100) / 100,
+          };
+        })
+      );
+      console.log('[getUserProgressDetails] Course breakdown built, count:', courseBreakdown.length);
+
+      console.log('[getUserProgressDetails] Step 6: Building final response...');
+      const result = {
+        user: {
+          id: user.id,
+          email: user.email,
+          displayName: user.displayName,
+          currentHskLevel: user.currentHskLevel,
+        },
+        studyInfo: {
+          currentStreak: user.currentStreak,
+          longestStreak: user.longestStreak,
+          totalStudyDays: user.totalStudyDays,
+          lastStudyDate: user.lastStudyDate,
+        },
+        completedLessons: completedLessonsData,
+        courseBreakdown,
+      };
+      console.log('[getUserProgressDetails] Returning result successfully');
+      return result;
+    } catch (error) {
+      console.error('[getUserProgressDetails] ERROR:', error);
+      console.error('[getUserProgressDetails] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      throw error;
     }
-
-    // Get all completed lessons with details
-    const completedLessons = await this.userLessonProgressRepository
-      .createQueryBuilder('progress')
-      .innerJoinAndSelect('progress.lesson', 'lesson')
-      .innerJoinAndSelect('lesson.course', 'course')
-      .where('progress.userId = :userId', { userId })
-      .andWhere('progress.status = :status', { status: LessonProgressStatus.COMPLETED })
-      .orderBy('progress.completedAt', 'DESC')
-      .getMany();
-
-    const completedLessonsData = completedLessons.map(p => ({
-      lessonId: p.lessonId,
-      lessonTitle: p.lesson.name,
-      courseId: p.lesson.courseId,
-      courseTitle: p.lesson.course.title,
-      scorePercentage: p.scorePercentage || 0,
-      completedAt: p.completedAt!,
-    }));
-
-    // Get course breakdown
-    const courses = await this.coursesRepository.find({ where: { isActive: true } });
-    const courseBreakdown = await Promise.all(
-      courses.map(async (course) => {
-        const lessons = await this.lessonsRepository.find({
-          where: { courseId: course.id, isActive: true },
-        });
-        const lessonIds = lessons.map(l => l.id);
-
-        const completed = await this.userLessonProgressRepository
-          .createQueryBuilder('progress')
-          .where('progress.userId = :userId', { userId })
-          .andWhere('progress.lessonId IN (:...lessonIds)', { lessonIds })
-          .andWhere('progress.status = :status', { status: LessonProgressStatus.COMPLETED })
-          .getMany();
-
-        const avgScore = completed.length > 0
-          ? completed.reduce((sum, p) => sum + (p.scorePercentage || 0), 0) / completed.length
-          : 0;
-
-        return {
-          courseId: course.id,
-          courseTitle: course.title,
-          totalLessons: lessons.length,
-          completedLessons: completed.length,
-          averageScore: Math.round(avgScore * 100) / 100,
-        };
-      })
-    );
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        displayName: user.displayName,
-        currentHskLevel: user.currentHskLevel,
-      },
-      studyInfo: {
-        currentStreak: user.currentStreak,
-        longestStreak: user.longestStreak,
-        totalStudyDays: user.totalStudyDays,
-        lastStudyDate: user.lastStudyDate,
-      },
-      completedLessons: completedLessonsData,
-      courseBreakdown,
-    };
   }
 
   // Course analytics

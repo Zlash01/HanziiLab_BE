@@ -26,6 +26,7 @@ import { RagModule } from './modules/rag/rag.module';
 import { FileUploadModule } from './modules/file-upload/file-upload.module';
 import { SrsModule } from './modules/srs/srs.module';
 import { UserQuestionReview } from './modules/srs/entities/user-question-review.entity';
+import { AudioGenModule } from './modules/audio-gen/audio-gen.module';
 
 @Module({
   imports: [
@@ -84,6 +85,7 @@ import { UserQuestionReview } from './modules/srs/entities/user-question-review.
     RagModule,
     FileUploadModule,
     SrsModule,
+    AudioGenModule,
   ],
 })
 export class AppModule {}

@@ -18,6 +18,12 @@ export interface ExtractedContent {
   metadata: Record<string, any>;
 }
 
+interface QuestionTypeComponents {
+  action: string; // SELECTION, MATCHING, FILL, BOOL
+  inputType: string; // TEXT, AUDIO, IMAGE
+  outputType: string; // TEXT, IMAGE
+}
+
 @Injectable()
 export class ContentExtractionService {
   private readonly logger = new Logger(ContentExtractionService.name);
@@ -164,8 +170,11 @@ export class ContentExtractionService {
     for (const question of questions) {
       // Extract text from JSON data
       const extractedText = this.extractTextFromQuestionData(question.data, question.questionType);
-      
+
       if (extractedText) {
+        // Parse question type for richer metadata
+        const typeComponents = this.parseQuestionType(question.questionType);
+
         extractedContent.push({
           sourceType: SourceType.QUESTION,
           sourceId: question.id,
@@ -174,7 +183,12 @@ export class ContentExtractionService {
             lessonId: question.lessonId,
             lessonTitle: question.lesson?.name,
             questionType: question.questionType,
+            questionAction: typeComponents.action, // SELECTION, MATCHING, FILL, BOOL
+            questionInputType: typeComponents.inputType, // TEXT, AUDIO, IMAGE
+            questionOutputType: typeComponents.outputType, // TEXT, IMAGE
             orderIndex: question.orderIndex,
+            hasAudio: question.data?.audioUrl !== undefined,
+            hasImage: question.data?.imageUrl !== undefined,
           },
         });
       }
@@ -227,28 +241,109 @@ export class ContentExtractionService {
     if (!data || typeof data !== 'object') return '';
 
     let text = '';
+    const typeComponents = this.parseQuestionType(questionType);
+
+    // Add context about question type for better semantic understanding
+    text += `${typeComponents.action} question. `;
 
     // Extract question text
     if (data.question) text += `Question: ${data.question}. `;
     if (data.prompt) text += `Prompt: ${data.prompt}. `;
     if (data.instruction) text += `Instruction: ${data.instruction}. `;
+    if (data.text) text += `${data.text}. `;
 
-    // Extract options for multiple choice
+    // Handle audio input types
+    if (typeComponents.inputType === 'AUDIO' && data.audioUrl) {
+      text += `Audio content available at: ${data.audioUrl}. `;
+    }
+
+    // Handle image input types
+    if (typeComponents.inputType === 'IMAGE' && data.imageUrl) {
+      text += `Image content available at: ${data.imageUrl}. `;
+    }
+
+    // Extract options for selection/matching questions
     if (data.options && Array.isArray(data.options)) {
       const optionsText = data.options
-        .map((option, index) => `${String.fromCharCode(65 + index)}: ${option}`)
+        .map((option, index) => {
+          if (typeof option === 'string') {
+            return `${String.fromCharCode(65 + index)}: ${option}`;
+          } else if (typeof option === 'object') {
+            // Handle image/audio options
+            let optText = `${String.fromCharCode(65 + index)}:`;
+            if (option.text) optText += ` ${option.text}`;
+            if (option.imageUrl) optText += ` [Image: ${option.imageUrl}]`;
+            if (option.audioUrl) optText += ` [Audio: ${option.audioUrl}]`;
+            return optText;
+          }
+          return '';
+        })
+        .filter(opt => opt)
         .join(' ');
       text += `Options: ${optionsText}. `;
     }
 
+    // Extract pairs for matching questions
+    if (data.pairs && Array.isArray(data.pairs)) {
+      const pairsText = data.pairs
+        .map((pair, index) => {
+          const left = pair.left || pair.question || '';
+          const right = pair.right || pair.answer || '';
+          return `Pair ${index + 1}: ${left} matches ${right}`;
+        })
+        .join('; ');
+      text += `Matching pairs: ${pairsText}. `;
+    }
+
+    // Extract blanks for fill-in questions
+    if (data.blanks && Array.isArray(data.blanks)) {
+      const blanksText = data.blanks
+        .map((blank, index) => `Blank ${index + 1}: ${blank}`)
+        .join(', ');
+      text += `Fill-in blanks: ${blanksText}. `;
+    }
+
     // Extract correct answer
-    if (data.correctAnswer) text += `Answer: ${data.correctAnswer}. `;
-    if (data.answer) text += `Answer: ${data.answer}. `;
+    if (data.correctAnswer !== undefined) {
+      text += `Answer: ${data.correctAnswer}. `;
+    }
+    if (data.answer !== undefined) {
+      text += `Answer: ${data.answer}. `;
+    }
+    if (data.correctAnswers && Array.isArray(data.correctAnswers)) {
+      text += `Answers: ${data.correctAnswers.join(', ')}. `;
+    }
 
     // Extract explanation
     if (data.explanation) text += `Explanation: ${data.explanation}. `;
+    if (data.hint) text += `Hint: ${data.hint}. `;
 
     return text.trim();
+  }
+
+  /**
+   * Parse question type enum into its components
+   * Format: question_{action}_{inputType}_{outputType}
+   * Example: question_selection_audio_text -> { action: 'SELECTION', inputType: 'AUDIO', outputType: 'TEXT' }
+   */
+  private parseQuestionType(questionType: string): QuestionTypeComponents {
+    // Remove 'question_' prefix and split by underscore
+    const parts = questionType.replace('question_', '').split('_');
+
+    if (parts.length >= 3) {
+      return {
+        action: parts[0].toUpperCase(), // SELECTION, MATCHING, FILL, BOOL
+        inputType: parts[1].toUpperCase(), // TEXT, AUDIO, IMAGE
+        outputType: parts[2].toUpperCase(), // TEXT, IMAGE
+      };
+    }
+
+    // Fallback for unexpected format
+    return {
+      action: 'UNKNOWN',
+      inputType: 'TEXT',
+      outputType: 'TEXT',
+    };
   }
 
   async generateEmbeddingsForContent(extractedContent: ExtractedContent[]): Promise<void> {

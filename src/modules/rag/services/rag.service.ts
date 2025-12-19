@@ -11,9 +11,8 @@ export interface RagQuery {
   query: string;
   userId?: number;
   hskLevel?: number;
-  context?: 'general' | 'word' | 'grammar' | 'lesson';
-  maxSources?: number;
-  minSimilarity?: number;
+  type?: 'general' | 'word' | 'grammar' | 'lesson';
+  context?: string | Record<string, any>;  // String or JSON of current question/content
 }
 
 export interface RagResponse {
@@ -38,6 +37,21 @@ export class RagService {
   private readonly llmServiceUrl: string;
   private readonly defaultModel: string;
 
+  // Smart default constants for context-based optimization
+  private readonly SIMILARITY_THRESHOLDS = {
+    word: 0.7,      // Word definitions need high precision
+    grammar: 0.6,   // Grammar patterns can be more flexible
+    lesson: 0.5,    // Lesson content can be broader
+    general: 0.6,   // Balanced default
+  };
+
+  private readonly SOURCE_LIMITS = {
+    word: 3,        // Word lookups need fewer sources
+    grammar: 7,     // Grammar needs more examples
+    lesson: 10,     // Lessons benefit from comprehensive context
+    general: 5,     // Balanced default
+  };
+
   constructor(
     @InjectRepository(RagContext)
     private ragContextRepository: Repository<RagContext>,
@@ -50,7 +64,11 @@ export class RagService {
 
   async query(ragQuery: RagQuery): Promise<RagResponse> {
     const startTime = Date.now();
-    const { query, userId, hskLevel, context = 'general', maxSources = 5, minSimilarity = 0.6 } = ragQuery;
+    const { query, userId, hskLevel, type = 'general', context } = ragQuery;
+
+    // Calculate smart defaults based on type and HSK level
+    const minSimilarity = this.getSmartMinSimilarity(type, hskLevel);
+    const maxSources = this.getSmartMaxSources(type, hskLevel);
 
     try {
       this.logger.debug(`Processing RAG query: "${query}" for user ${userId || 'anonymous'}`);
@@ -63,12 +81,12 @@ export class RagService {
         includeMetadata: true,
       };
 
-      // Filter by context type
-      if (context === 'word') {
+      // Filter by type
+      if (type === 'word') {
         searchOptions.sourceTypes = [SourceType.WORD];
-      } else if (context === 'grammar') {
+      } else if (type === 'grammar') {
         searchOptions.sourceTypes = [SourceType.GRAMMAR];
-      } else if (context === 'lesson') {
+      } else if (type === 'lesson') {
         searchOptions.sourceTypes = [SourceType.CONTENT, SourceType.QUESTION];
       }
 
@@ -77,7 +95,7 @@ export class RagService {
       this.logger.debug(`Found ${sources.length} relevant sources`);
 
       // 2. Generate response using LLM
-      const response = await this.generateResponse(query, sources, hskLevel);
+      const response = await this.generateResponse(query, sources, hskLevel, context);
 
       const processingTime = Date.now() - startTime;
 
@@ -112,6 +130,7 @@ export class RagService {
     query: string,
     sources: SearchResult[],
     hskLevel?: number,
+    userContext?: string | Record<string, any>,
   ): Promise<{ answer: string; confidence: number }> {
     try {
       // Build context from sources
@@ -123,21 +142,30 @@ export class RagService {
         })
         .join('\n\n');
 
+      // Build full context including user's current content
+      let fullContext = contextText;
+      if (userContext) {
+        const contextStr = typeof userContext === 'string' 
+          ? userContext 
+          : JSON.stringify(userContext, null, 2);
+        fullContext = `Current content the user is viewing:\n${contextStr}\n\n${contextText}`;
+      }
+
       // Build the prompt
-      const prompt = this.buildPrompt(query, contextText, hskLevel);
+      const prompt = this.buildPrompt(query, fullContext, hskLevel);
 
       // Call LLM service
       const llmResponse = await axios.post(
         `${this.llmServiceUrl}/generate`,
         {
           prompt,
-          context: contextText,
-          model: this.defaultModel,
-          maxTokens: 500,
+          context: fullContext,
+          model: 'gemini-2.5-flash',
+          maxTokens: 10000,
           temperature: 0.7,
         } as LLMRequest,
         {
-          timeout: 30000,
+          timeout: 60000,
           headers: { 'Content-Type': 'application/json' },
         }
       );
@@ -161,24 +189,57 @@ export class RagService {
     }
   }
 
+  /**
+   * Calculate smart minimum similarity threshold based on context type and HSK level
+   */
+  private getSmartMinSimilarity(context: string, hskLevel?: number): number {
+    const baseThreshold = this.SIMILARITY_THRESHOLDS[context] || this.SIMILARITY_THRESHOLDS.general;
+
+    // Adjust for beginner levels - show more examples
+    if (hskLevel && hskLevel <= 2) {
+      return Math.max(baseThreshold - 0.1, 0.4); // Lower threshold but not below 0.4
+    }
+
+    return baseThreshold;
+  }
+
+  /**
+   * Calculate smart maximum sources based on context type and HSK level
+   */
+  private getSmartMaxSources(context: string, hskLevel?: number): number {
+    const baseLimit = this.SOURCE_LIMITS[context] || this.SOURCE_LIMITS.general;
+
+    // Adjust for beginner levels - provide more examples
+    if (hskLevel && hskLevel <= 2) {
+      return Math.min(baseLimit + 2, 20); // Add 2 sources but cap at 20
+    }
+
+    return baseLimit;
+  }
+
   private buildPrompt(query: string, context: string, hskLevel?: number): string {
     const hskContext = hskLevel ? `The user is studying Chinese at HSK level ${hskLevel}. ` : '';
-    
-    return `You are a helpful Chinese language learning assistant. ${hskContext}Answer the user's question using the provided context. If the context doesn't contain enough information, say so clearly.
 
-Context:
+    return `You are a professional Chinese language learning assistant for Vietnamese speakers. ${hskContext}
+
+IMPORTANT: The user will ask questions in Vietnamese. You MUST respond in Vietnamese.
+
+Context Information:
 ${context}
 
-User Question: ${query}
+User Question (in Vietnamese): ${query}
 
 Instructions:
+- Answer the user's question using the provided context
+- Respond ENTIRELY in Vietnamese
+- Use Chinese characters only as examples with Vietnamese explanations
 - Provide accurate, helpful answers about Chinese language learning
-- Use simple, clear explanations appropriate for language learners
-- Include relevant examples when helpful
-- If uncertain, acknowledge limitations
+- Use simple, clear Vietnamese explanations appropriate for language learners
+- Include relevant Chinese examples with Vietnamese translations when helpful
+- If the context doesn't contain enough information, acknowledge this clearly in Vietnamese
 - Keep responses concise but informative
 
-Answer:`;
+Answer (in Vietnamese):`;
   }
 
   private generateFallbackResponse(query: string, sources: SearchResult[], hskLevel?: number): string {

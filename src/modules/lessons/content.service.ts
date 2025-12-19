@@ -37,9 +37,14 @@ export class ContentService {
     });
   }
 
-  async findOne(id: number): Promise<Content> {
+  async findOne(id: number, includeInactive: boolean = false): Promise<Content> {
+    const whereClause: { id: number; isActive?: boolean } = { id };
+    if (!includeInactive) {
+      whereClause.isActive = true;
+    }
+    
     const content = await this.contentRepository.findOne({
-      where: { id, isActive: true },
+      where: whereClause,
     });
     
     if (!content) {
@@ -50,13 +55,22 @@ export class ContentService {
   }
 
   async update(id: number, updateContentDto: UpdateContentDto): Promise<Content> {
-    const content = await this.findOne(id);
+    console.log('[ContentService.update] Called with id:', id);
+    console.log('[ContentService.update] updateContentDto:', JSON.stringify(updateContentDto, null, 2));
+    
+    const content = await this.findOne(id, true); // Include inactive for updates
+    console.log('[ContentService.update] Found content before update:', JSON.stringify(content, null, 2));
+    
     Object.assign(content, updateContentDto);
-    return await this.contentRepository.save(content);
+    console.log('[ContentService.update] Content after Object.assign:', JSON.stringify(content, null, 2));
+    
+    const saved = await this.contentRepository.save(content);
+    console.log('[ContentService.update] Saved content:', JSON.stringify(saved, null, 2));
+    return saved;
   }
 
   async remove(id: number): Promise<void> {
-    const content = await this.findOne(id);
+    const content = await this.findOne(id, true); // Include inactive for soft delete
     content.isActive = false;
     await this.contentRepository.save(content);
   }
@@ -66,5 +80,18 @@ export class ContentService {
     if (result.affected === 0) {
       throw new NotFoundException(`Content with ID ${id} not found`);
     }
+  }
+
+  async restore(id: number): Promise<Content> {
+    const content = await this.contentRepository.findOne({
+      where: { id },
+    });
+
+    if (!content) {
+      throw new NotFoundException(`Content with ID ${id} not found`);
+    }
+
+    content.isActive = true;
+    return this.contentRepository.save(content);
   }
 }

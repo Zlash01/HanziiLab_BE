@@ -1,0 +1,266 @@
+@startuml HanziiLab_Database_ERD
+
+title HanziiLab Backend - Database Entity Relationship Diagram
+
+skinparam linetype ortho
+skinparam ranksep 60
+skinparam nodesep 40
+
+!define TABLE(name) entity name << (T,#FFAAAA) >>
+!define PK(x) <b><color:#b8861b><&key></color> x</b>
+!define FK(x) <color:#aaaaaa><&link-intact></color> x
+!define COLUMN(x) x
+!define UNIQUE(x) <u>x</u>
+
+' ==========================================
+' USERS & AUTH
+' ==========================================
+
+TABLE(users) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  UNIQUE(email) : VARCHAR(255)
+  COLUMN(password_hash) : VARCHAR(255)
+  COLUMN(display_name) : VARCHAR(100)
+  COLUMN(role) : ENUM('user', 'admin')
+  COLUMN(current_hsk_level) : TINYINT [default: 1]
+  COLUMN(native_language) : VARCHAR(10) [default: 'en']
+  COLUMN(total_study_days) : INT [default: 0]
+  COLUMN(current_streak) : INT [default: 0]
+  COLUMN(longest_streak) : INT [default: 0]
+  COLUMN(last_study_date) : DATE
+  COLUMN(is_active) : BOOLEAN [default: true]
+  COLUMN(created_at) : TIMESTAMP
+  COLUMN(updated_at) : TIMESTAMP
+}
+
+' ==========================================
+' COURSES & LESSONS
+' ==========================================
+
+TABLE(courses) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  COLUMN(hsk_level) : ENUM(1-9)
+  COLUMN(title) : VARCHAR(200)
+  COLUMN(description) : TEXT
+  FK(prerequisite_course_id) : INT
+  COLUMN(is_active) : BOOLEAN [default: true]
+  COLUMN(order_index) : INT
+  COLUMN(created_at) : TIMESTAMP
+}
+
+TABLE(lessons) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  FK(course_id) : INT
+  COLUMN(name) : VARCHAR(200)
+  COLUMN(description) : TEXT
+  COLUMN(is_active) : BOOLEAN [default: true]
+  COLUMN(order_index) : INT
+}
+
+TABLE(contents) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  FK(lesson_id) : INT
+  COLUMN(order_index) : INT
+  COLUMN(type) : ENUM('content_word_definition', 'content_sentences')
+  COLUMN(data) : JSON
+  COLUMN(is_active) : BOOLEAN [default: true]
+}
+
+TABLE(questions) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  FK(lesson_id) : INT
+  COLUMN(order_index) : INT
+  COLUMN(question_type) : ENUM(QuestionType)
+  COLUMN(data) : JSON
+  COLUMN(is_active) : BOOLEAN [default: true]
+}
+
+' ==========================================
+' WORDS & VOCABULARY
+' ==========================================
+
+TABLE(words) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  UNIQUE(simplified) : VARCHAR(50)
+  COLUMN(traditional) : VARCHAR(50)
+  COLUMN(created_at) : TIMESTAMP
+}
+
+TABLE(word_senses) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  FK(word_id) : INT
+  COLUMN(sense_number) : INT
+  COLUMN(pinyin) : VARCHAR(100)
+  COLUMN(part_of_speech) : VARCHAR(20)
+  COLUMN(hsk_level) : INT
+  COLUMN(is_primary) : BOOLEAN [default: false]
+  COLUMN(image_url) : VARCHAR(500)
+  COLUMN(audio_url) : VARCHAR(500)
+  ..
+  UNIQUE(word_id, sense_number)
+}
+
+TABLE(word_sense_translations) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  FK(word_sense_id) : INT
+  COLUMN(language) : VARCHAR(5) [default: 'vn']
+  COLUMN(translation) : TEXT
+  COLUMN(additional_detail) : TEXT
+  ..
+  UNIQUE(word_sense_id, language)
+}
+
+' ==========================================
+' GRAMMAR
+' ==========================================
+
+TABLE(grammar_patterns) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  COLUMN(pattern) : JSON
+  COLUMN(pattern_pinyin) : JSON
+  COLUMN(pattern_formula) : VARCHAR(200)
+  COLUMN(hsk_level) : INT
+  COLUMN(created_at) : TIMESTAMP
+}
+
+TABLE(grammar_translations) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  FK(grammar_pattern_id) : INT
+  COLUMN(language) : VARCHAR(5)
+  COLUMN(grammar_point) : VARCHAR(200)
+  COLUMN(explanation) : TEXT
+  COLUMN(example) : JSON
+  ..
+  UNIQUE(grammar_pattern_id, language)
+}
+
+' ==========================================
+' LESSON JUNCTIONS (Many-to-Many)
+' ==========================================
+
+TABLE(lesson_words) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  FK(lesson_id) : INT
+  FK(word_sense_id) : INT
+  COLUMN(order_index) : INT
+  ..
+  UNIQUE(lesson_id, word_sense_id)
+}
+
+TABLE(lesson_grammar_patterns) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  FK(lesson_id) : INT
+  FK(grammar_pattern_id) : INT
+  COLUMN(order_index) : INT
+  ..
+  UNIQUE(lesson_id, grammar_pattern_id)
+}
+
+' ==========================================
+' USER PROGRESS & SRS
+' ==========================================
+
+TABLE(user_lesson_progress) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  FK(user_id) : INT
+  FK(lesson_id) : INT
+  COLUMN(status) : ENUM('not_started', 'completed')
+  COLUMN(score_percentage) : DECIMAL(5,2)
+  COLUMN(completed_at) : TIMESTAMP
+  COLUMN(created_at) : TIMESTAMP
+  COLUMN(updated_at) : TIMESTAMP
+  ..
+  UNIQUE(user_id, lesson_id)
+}
+
+TABLE(user_question_reviews) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  FK(user_id) : INT
+  FK(question_id) : INT
+  FK(lesson_id) : INT
+  COLUMN(ease_factor) : DECIMAL(4,2) [default: 2.5]
+  COLUMN(interval) : INT [default: 1]
+  COLUMN(repetitions) : INT [default: 0]
+  COLUMN(next_review_date) : TIMESTAMP
+  COLUMN(last_reviewed_at) : TIMESTAMP
+  COLUMN(created_at) : TIMESTAMP
+  COLUMN(updated_at) : TIMESTAMP
+  ..
+  UNIQUE(user_id, question_id)
+}
+
+' ==========================================
+' RAG (AI Features)
+' ==========================================
+
+TABLE(rag_contexts) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  FK(user_id) : INT
+  COLUMN(query) : TEXT
+  COLUMN(response) : TEXT
+  COLUMN(retrieved_sources) : JSON
+  COLUMN(processing_time_ms) : INT
+  COLUMN(created_at) : TIMESTAMP
+}
+
+TABLE(embeddings) {
+  PK(id) : INT AUTO_INCREMENT
+  --
+  COLUMN(source_type) : ENUM('word', 'grammar', 'content', 'question')
+  COLUMN(source_id) : INT
+  COLUMN(content_text) : TEXT
+  COLUMN(embedding) : JSON
+  COLUMN(metadata) : JSON
+  COLUMN(is_active) : BOOLEAN [default: true]
+  COLUMN(created_at) : TIMESTAMP
+  COLUMN(updated_at) : TIMESTAMP
+}
+
+' ==========================================
+' RELATIONSHIPS
+' ==========================================
+
+' Courses
+courses ||--o{ lessons : "has"
+courses ||--o| courses : "prerequisite"
+
+' Lessons
+lessons ||--o{ contents : "has"
+lessons ||--o{ questions : "has"
+lessons ||--o{ lesson_words : "contains"
+lessons ||--o{ lesson_grammar_patterns : "contains"
+lessons ||--o{ user_lesson_progress : "tracked by"
+
+' Words
+words ||--o{ word_senses : "has meanings"
+word_senses ||--o{ word_sense_translations : "translated to"
+word_senses ||--o{ lesson_words : "used in"
+
+' Grammar
+grammar_patterns ||--o{ grammar_translations : "translated to"
+grammar_patterns ||--o{ lesson_grammar_patterns : "used in"
+
+' Users
+users ||--o{ user_lesson_progress : "has progress"
+users ||--o{ user_question_reviews : "reviews"
+users ||--o{ rag_contexts : "queries"
+
+' Questions
+questions ||--o{ user_question_reviews : "reviewed as"
+
+@enduml

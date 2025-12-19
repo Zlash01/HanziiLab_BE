@@ -76,4 +76,12 @@ export class ContentController {
   hardDelete(@Param('id', ParseIntPipe) id: number) {
     return this.contentService.hardDelete(id);
   }
+
+  @ApiOperation({ summary: 'Restore soft-deleted lesson content' })
+  @ApiResponse({ status: 200, description: 'Content restored successfully' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Content ID' })
+  @Patch(':id/restore')
+  restore(@Param('id', ParseIntPipe) id: number) {
+    return this.contentService.restore(id);
+  }
 }

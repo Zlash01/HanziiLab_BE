@@ -1,0 +1,81 @@
+@startuml RAG_Query
+
+title Retrieval-Augmented Generation (RAG) Query Flow
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Client
+participant "RagController" as RC
+participant "RagService" as RS
+participant "VectorSearchService" as VS
+participant "EmbeddingService" as ES
+participant "LLM Service" as LLM
+database "Database" as DB
+
+Client -> RC: POST /rag/query\n{ query, hskLevel?, context?, maxSources? }
+activate RC
+
+RC -> RS: query(ragQuery)
+activate RS
+
+note right of RS
+    context can be:
+    - 'general' (all sources)
+    - 'word' (word definitions)
+    - 'grammar' (grammar patterns)
+    - 'lesson' (content & questions)
+end note
+
+== Vector Search for Relevant Content ==
+RS -> VS: searchSimilar(query, searchOptions)
+activate VS
+
+VS -> ES: generateEmbedding(query)
+activate ES
+ES -> ES: Call embedding model\n(bge-m3, 1024 dimensions)
+ES --> VS: queryEmbedding[]
+deactivate ES
+
+VS -> DB: SELECT *, cosine_similarity(embedding, queryEmbedding)\nFROM embeddings\nWHERE sourceType IN (...)\nAND similarity >= minSimilarity\nORDER BY similarity DESC\nLIMIT maxSources
+DB --> VS: relevantEmbeddings[]
+
+VS --> RS: SearchResult[]\n{ sourceType, sourceId, contentText, similarity, metadata }
+deactivate VS
+
+== Generate Response using LLM ==
+RS -> RS: Build context from sources
+note right of RS
+    Context format:
+    1. [Word (HSK 2)] 好 - good, well
+    2. [Grammar (HSK 1)] Subject + 是 + ...
+end note
+
+RS -> RS: buildPrompt(query, contextText, hskLevel)
+note right of RS
+    Prompt includes:
+    - System instructions for Chinese tutor
+    - Retrieved context
+    - User query
+    - HSK level hint
+end note
+
+RS -> LLM: POST /generate\n{ prompt, context, model, maxTokens, temperature }
+activate LLM
+LLM -> LLM: Process with LLM model\n(e.g., qwen-2.5b-instruct)
+LLM --> RS: { text/response }
+deactivate LLM
+
+RS -> RS: calculateConfidence(sources, llmResponse)
+
+== Store Context for Analytics ==
+RS -> DB: INSERT INTO rag_contexts\n(userId, query, response, retrievedSources, processingTimeMs)
+DB --> RS: savedContext with id
+
+RS --> RC: RagResponse\n{ answer, sources, confidence, processingTime, contextId }
+deactivate RS
+
+RC --> Client: 200 OK\n{\n  answer: "...",\n  sources: [...],\n  confidence: 0.85,\n  processingTime: 1234,\n  contextId: 42\n}
+deactivate RC
+
+@enduml

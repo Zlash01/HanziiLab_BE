@@ -76,4 +76,12 @@ export class QuestionsController {
   hardDelete(@Param('id', ParseIntPipe) id: number) {
     return this.questionsService.hardDelete(id);
   }
+
+  @ApiOperation({ summary: 'Restore soft-deleted lesson question' })
+  @ApiResponse({ status: 200, description: 'Question restored successfully' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Question ID' })
+  @Patch(':id/restore')
+  restore(@Param('id', ParseIntPipe) id: number) {
+    return this.questionsService.restore(id);
+  }
 }
