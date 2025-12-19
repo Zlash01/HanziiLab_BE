@@ -237,6 +237,29 @@ export class ContentExtractionService {
     return text.trim();
   }
 
+  /**
+   * Extract display text from TextContent object (selection questions, fill questions)
+   * Supports both new TextContent format and legacy string format
+   */
+  private extractTextFromTextContent(content: any): string {
+    if (!content) return '';
+    
+    // Legacy string format
+    if (typeof content === 'string') return content;
+    
+    // New TextContent format - Chinese mode
+    if (content.chinese && Array.isArray(content.chinese) && content.chinese.length > 0) {
+      const chinese = content.chinese.join('');
+      const pinyin = content.pinyin?.join(' ') || '';
+      return pinyin ? `${chinese} (${pinyin})` : chinese;
+    }
+    
+    // New TextContent format - Simple text mode
+    if (content.text) return content.text;
+    
+    return '';
+  }
+
   private extractTextFromQuestionData(data: any, questionType: string): string {
     if (!data || typeof data !== 'object') return '';
 
@@ -246,8 +269,12 @@ export class ContentExtractionService {
     // Add context about question type for better semantic understanding
     text += `${typeComponents.action} question. `;
 
-    // Extract question text
-    if (data.question) text += `Question: ${data.question}. `;
+    // Extract question text - new format first, fallback to legacy
+    if (data.questionContent) {
+      text += `Question: ${this.extractTextFromTextContent(data.questionContent)}. `;
+    } else if (data.question) {
+      text += `Question: ${data.question}. `;
+    }
     if (data.prompt) text += `Prompt: ${data.prompt}. `;
     if (data.instruction) text += `Instruction: ${data.instruction}. `;
     if (data.text) text += `${data.text}. `;
@@ -262,16 +289,25 @@ export class ContentExtractionService {
       text += `Image content available at: ${data.imageUrl}. `;
     }
 
-    // Extract options for selection/matching questions
+    // Extract options for selection/matching questions - handle both formats
     if (data.options && Array.isArray(data.options)) {
       const optionsText = data.options
         .map((option, index) => {
+          // Try new format: option.content (TextContent)
+          if (option.content) {
+            return `${String.fromCharCode(65 + index)}: ${this.extractTextFromTextContent(option.content)}`;
+          }
+          // Legacy format: option.text (string)
+          if (option.text) {
+            return `${String.fromCharCode(65 + index)}: ${option.text}`;
+          }
+          // Plain string option
           if (typeof option === 'string') {
             return `${String.fromCharCode(65 + index)}: ${option}`;
-          } else if (typeof option === 'object') {
-            // Handle image/audio options
+          }
+          // Handle image/audio options
+          if (typeof option === 'object') {
             let optText = `${String.fromCharCode(65 + index)}:`;
-            if (option.text) optText += ` ${option.text}`;
             if (option.imageUrl) optText += ` [Image: ${option.imageUrl}]`;
             if (option.audioUrl) optText += ` [Audio: ${option.audioUrl}]`;
             return optText;
@@ -281,6 +317,43 @@ export class ContentExtractionService {
         .filter(opt => opt)
         .join(' ');
       text += `Options: ${optionsText}. `;
+    }
+
+    // Handle new FillTextText segments format
+    if (data.segments && Array.isArray(data.segments)) {
+      const segmentsText = data.segments
+        .map(segment => {
+          if (segment.type === 'text' && segment.content) {
+            return this.extractTextFromTextContent(segment.content);
+          }
+          if (segment.type === 'blank') {
+            return `[BLANK ${segment.blankIndex}]`;
+          }
+          return '';
+        })
+        .join(' ');
+      text += `Sentence: ${segmentsText}. `;
+    }
+
+    // Handle new option bank format (FillTextText)
+    if (data.optionBankItems && Array.isArray(data.optionBankItems)) {
+      const bankText = data.optionBankItems
+        .map(item => this.extractTextFromTextContent(item))
+        .join(', ');
+      text += `Option bank: ${bankText}. `;
+    }
+
+    // Handle new blank answers format (FillTextText)
+    if (data.blankAnswers && Array.isArray(data.blankAnswers)) {
+      const answersText = data.blankAnswers
+        .map(blank => {
+          const answers = blank.correctAnswers
+            ?.map(a => this.extractTextFromTextContent(a))
+            .join(' or ');
+          return `Blank ${blank.index}: ${answers}`;
+        })
+        .join('; ');
+      text += `Answers: ${answersText}. `;
     }
 
     // Extract pairs for matching questions
@@ -295,10 +368,15 @@ export class ContentExtractionService {
       text += `Matching pairs: ${pairsText}. `;
     }
 
-    // Extract blanks for fill-in questions
+    // Extract blanks for fill-in questions (legacy format)
     if (data.blanks && Array.isArray(data.blanks)) {
       const blanksText = data.blanks
-        .map((blank, index) => `Blank ${index + 1}: ${blank}`)
+        .map((blank, index) => {
+          if (typeof blank === 'object' && blank.correct) {
+            return `Blank ${blank.index || index + 1}: ${blank.correct.join(' or ')}`;
+          }
+          return `Blank ${index + 1}: ${blank}`;
+        })
         .join(', ');
       text += `Fill-in blanks: ${blanksText}. `;
     }

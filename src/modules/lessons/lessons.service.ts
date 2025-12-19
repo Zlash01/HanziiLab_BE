@@ -741,4 +741,21 @@ export class LessonsService {
       );
     }
   }
+
+  async deleteLessonItem(
+    id: number,
+    itemType: LessonItemType,
+  ): Promise<{ message: string }> {
+    if (itemType === LessonItemType.CONTENT) {
+      await this.contentService.remove(id);
+      return { message: 'Content deleted successfully' };
+    } else if (itemType === LessonItemType.QUESTION) {
+      await this.questionsService.remove(id);
+      return { message: 'Question deleted successfully' };
+    } else {
+      throw new BadRequestException(
+        'Invalid itemType. Must be "content" or "question"',
+      );
+    }
+  }
 }

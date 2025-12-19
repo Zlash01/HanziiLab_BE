@@ -318,4 +318,24 @@ export class LessonsController {
   ): Promise<any> {
     return this.lessonsService.updateLessonItem(id, updateLessonItemDto);
   }
+
+  @ApiOperation({ summary: 'Delete lesson content or question' })
+  @ApiResponse({ status: 200, description: 'Lesson item deleted successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not found' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiQuery({ name: 'type', enum: ['content', 'question'], required: true })
+  @Delete('items/:id')
+  @Roles(Role.Admin)
+  async deleteLessonItem(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('type') type: string,
+  ) {
+    // Convert string type to enum manually or use pipe if DTO available
+    // Since we just need to pass it to service which expects LessonItemType
+    // We can map it here.
+    const itemType = type as any; // Simple casting, validation happens in service or we can add pipe
+    return this.lessonsService.deleteLessonItem(id, itemType);
+  }
 }
