@@ -1280,6 +1280,7 @@ enum QuestionType {
   MATCHING_AUDIO_IMAGE = 'question_matching_audio_image',
   FILL_TEXT_TEXT = 'question_fill_text_text',
   BOOL_AUDIO_TEXT = 'question_bool_audio_text',
+  BOOL_IMAGE_TEXT = 'question_bool_image_text',
 }
 ```
 
@@ -1502,10 +1503,40 @@ True/False question based on audio.
 
 ```json
 {
-  "audioUrl": "https://example.com/audio/statement.mp3",
-  "statement": "This audio says 'goodbye' in Chinese",
+  "instruction": "Listen to the audio and determine if the statement is true or false",
+  "audio": "filename.mp3",
+  "audio_url": "https://example.com/audio/statement.mp3",
+  "transcriptContent": {
+    "chinese": ["你", "好"],
+    "pinyin": ["nǐ", "hǎo"]
+  },
+  "english": "Hello",
+  "statementContent": {
+    "text": "The audio says 'goodbye' in Chinese"
+  },
   "correctAnswer": false,
   "explanation": "The audio says '你好' (nǐ hǎo) which means 'hello', not goodbye"
+}
+```
+
+#### question_bool_image_text
+
+True/False question based on an image.
+
+**Data Structure:**
+
+```json
+{
+  "instruction": "Look at the image and determine if the statement is true or false",
+  "image": "filename.jpg",
+  "image_url": "https://example.com/images/apple.jpg",
+  "alt": "A red apple on a table",
+  "statementContent": {
+    "chinese": ["这", "是", "苹", "果"],
+    "pinyin": ["zhè", "shì", "píng", "guǒ"]
+  },
+  "correctAnswer": true,
+  "explanation": "The image shows an apple, which is '苹果' (píngguǒ) in Chinese"
 }
 ```
 

@@ -15,7 +15,9 @@ import {
   HttpStatus,
   ParseEnumPipe,
   NotFoundException,
+  Req,
 } from '@nestjs/common';
+import { Request } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -40,6 +42,7 @@ import { RolesGuard } from '../auth/guard/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/role.enum';
 import { HskLevel } from './enums/hsk-level.enum';
+import { JwtPayload } from '../users/interfaces/jwt-payload.interface';
 
 @ApiTags('courses')
 @Controller('courses')
@@ -232,11 +235,18 @@ export class CoursesController {
       },
     },
   })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
+  @ApiForbiddenResponse({ description: 'Authentication required' })
   @Get()
-  @Roles(Role.Admin)
-  async getAllCourses(@Query() query: GetCoursesQueryDto) {
-    const { courses, total } = await this.coursesService.findAll(query);
+  @Roles(Role.Admin, Role.User)
+  async getAllCourses(@Query() query: GetCoursesQueryDto, @Req() req: Request) {
+    const user = req.user as JwtPayload;
+    
+    // For non-admin users, force isActive filter to only show active courses
+    const effectiveQuery = user.role === Role.Admin 
+      ? query 
+      : { ...query, isActive: true };
+    
+    const { courses, total } = await this.coursesService.findAll(effectiveQuery);
     const { page = 1, limit = 10 } = query;
 
     return {
@@ -288,14 +298,22 @@ export class CoursesController {
     },
   })
   @ApiNotFoundResponse({ description: 'Course not found' })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
+  @ApiForbiddenResponse({ description: 'Authentication required' })
   @Get(':id')
-  @Roles(Role.Admin)
-  async getCourseById(@Param('id', ParseIntPipe) id: number) {
+  @Roles(Role.Admin, Role.User)
+  async getCourseById(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
+    const user = req.user as JwtPayload;
     const course = await this.coursesService.findById(id);
+    
     if (!course) {
       throw new NotFoundException('Course not found');
     }
+    
+    // Non-admin users cannot access inactive (soft-deleted) courses
+    if (user.role !== Role.Admin && !course.isActive) {
+      throw new NotFoundException('Course not found');
+    }
+    
     return course;
   }
 

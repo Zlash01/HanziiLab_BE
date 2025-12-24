@@ -10,4 +10,5 @@ export enum QuestionType {
   MATCHING_AUDIO_IMAGE = 'question_matching_audio_image',
   FILL_TEXT_TEXT = 'question_fill_text_text',
   BOOL_AUDIO_TEXT = 'question_bool_audio_text',
+  BOOL_IMAGE_TEXT = 'question_bool_image_text',
 }
