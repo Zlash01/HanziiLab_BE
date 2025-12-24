@@ -233,6 +233,7 @@ Instructions:
 - Answer the user's question using the provided context
 - Respond ENTIRELY in Vietnamese
 - Use Chinese characters only as examples with Vietnamese explanations
+- IMPORTANT: Always wrap Chinese characters/words in **...** markdown format for bold styling (e.g., **你好**, **学习**)
 - Provide accurate, helpful answers about Chinese language learning
 - Use simple, clear Vietnamese explanations appropriate for language learners
 - Include relevant Chinese examples with Vietnamese translations when helpful
