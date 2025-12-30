@@ -526,7 +526,7 @@ export class LessonsService {
   async getLessonWords(lessonId: number): Promise<LessonWord[]> {
     return this.lessonWordRepository.find({
       where: { lessonId },
-      relations: ['wordSense', 'wordSense.word'],
+      relations: ['wordSense', 'wordSense.word', 'wordSense.translations'],
       order: { orderIndex: 'ASC' },
     });
   }
@@ -650,7 +650,7 @@ export class LessonsService {
   ): Promise<LessonGrammarPattern[]> {
     return this.lessonGrammarPatternRepository.find({
       where: { lessonId },
-      relations: ['grammarPattern'],
+      relations: ['grammarPattern', 'grammarPattern.translations'],
       order: { orderIndex: 'ASC' },
     });
   }
