@@ -70,10 +70,14 @@ export class RagService {
     const minSimilarity = this.getSmartMinSimilarity(type, hskLevel);
     const maxSources = this.getSmartMaxSources(type, hskLevel);
 
+    // Track if embedding service is available (for graceful degradation)
+    let sources: SearchResult[] = [];
+    let embeddingServiceAvailable = true;
+
     try {
       this.logger.debug(`Processing RAG query: "${query}" for user ${userId || 'anonymous'}`);
 
-      // 1. Search for relevant content
+      // 1. Search for relevant content (with failsafe)
       const searchOptions: SearchOptions = {
         minSimilarity,
         limit: maxSources,
@@ -90,11 +94,19 @@ export class RagService {
         searchOptions.sourceTypes = [SourceType.CONTENT, SourceType.QUESTION];
       }
 
-      const sources = await this.vectorSearchService.searchSimilar(query, searchOptions);
+      // Attempt vector search - gracefully degrade if embedding service fails
+      try {
+        sources = await this.vectorSearchService.searchSimilar(query, searchOptions);
+        this.logger.debug(`Found ${sources.length} relevant sources`);
+      } catch (embeddingError) {
+        this.logger.warn(
+          `Embedding service unavailable, proceeding without context: ${embeddingError.message}`
+        );
+        embeddingServiceAvailable = false;
+        sources = []; // Continue with no sources
+      }
 
-      this.logger.debug(`Found ${sources.length} relevant sources`);
-
-      // 2. Generate response using LLM
+      // 2. Generate response using LLM (works with or without sources)
       const response = await this.generateResponse(query, sources, hskLevel, context);
 
       const processingTime = Date.now() - startTime;
@@ -113,10 +125,15 @@ export class RagService {
         processingTimeMs: processingTime,
       });
 
+      // Adjust confidence if running in degraded mode
+      const finalConfidence = embeddingServiceAvailable 
+        ? response.confidence 
+        : Math.min(response.confidence, 0.3); // Cap confidence when no context
+
       return {
         answer: response.answer,
         sources,
-        confidence: response.confidence,
+        confidence: finalConfidence,
         processingTime,
         contextId: ragContext.id,
       };

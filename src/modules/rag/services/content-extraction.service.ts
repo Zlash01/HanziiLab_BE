@@ -98,7 +98,10 @@ export class ContentExtractionService {
 
     for (const pattern of grammarPatterns) {
       // Combine pattern info with translations
-      const patternText = `Pattern: ${pattern.pattern}${pattern.patternPinyin ? ` (${pattern.patternPinyin})` : ''}`;
+      // pattern and patternPinyin are now string[] arrays, join them for display
+      const patternStr = Array.isArray(pattern.pattern) ? pattern.pattern.join('') : pattern.pattern;
+      const pinyinStr = Array.isArray(pattern.patternPinyin) ? pattern.patternPinyin.join(' ') : pattern.patternPinyin;
+      const patternText = `Pattern: ${patternStr}${pinyinStr ? ` (${pinyinStr})` : ''}`;
       const formulaText = pattern.patternFormula ? ` Formula: ${pattern.patternFormula}` : '';
       const translationsText = pattern.translations
         .map(t => `${t.explanation} (${t.language})`)
@@ -111,8 +114,8 @@ export class ContentExtractionService {
         sourceId: pattern.id,
         text: combinedText,
         metadata: {
-          pattern: pattern.pattern,
-          patternPinyin: pattern.patternPinyin,
+          pattern: patternStr, // Store as joined string in metadata for search
+          patternPinyin: pinyinStr,
           patternFormula: pattern.patternFormula,
           hskLevel: pattern.hskLevel,
           translationsCount: pattern.translations.length,
